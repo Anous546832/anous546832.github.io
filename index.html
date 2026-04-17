@@ -2,92 +2,45 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8" />
-<title>My Netflix Embed V19.9.2 - TIMECODE FIELD</title>
+<title>My Netflix V21.0 - DATABASE MODE</title>
 
 <style>
-/* --- BASE & LAYOUT (Source V19.7) --- */
+/* --- BASE & LAYOUT (Ton Design Parfait) --- */
 html, body { height: 100%; overflow: hidden; margin: 0; font-family: 'Segoe UI', Roboto, Arial, sans-serif; background: #000; color: white; user-select: none; }
-
-header { 
-    height: 60px; padding: 0 20px; background: rgba(0,0,0,0.95); border-bottom: 1px solid #333; 
-    display: flex; justify-content: space-between; align-items: center; position: relative; z-index: 10000;
-}
-
+header { height: 60px; padding: 0 20px; background: rgba(0,0,0,0.95); border-bottom: 1px solid #333; display: flex; justify-content: space-between; align-items: center; position: relative; z-index: 10000; }
 .header-left { flex: 1; display: flex; align-items: center; font-size: 18px; font-weight: bold; }
 .header-center { flex: 2; text-align: center; }
 .header-right { flex: 1; display: flex; gap: 12px; align-items: center; justify-content: flex-end; }
-
-#currentEpisodeDisplay {
-    display: none; background: rgba(40, 40, 40, 0.6); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-    padding: 6px 20px; border-radius: 8px; font-size: 14px; color: #efefef; border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
+#currentEpisodeDisplay { display: none; background: rgba(40, 40, 40, 0.6); backdrop-filter: blur(10px); padding: 6px 20px; border-radius: 8px; font-size: 14px; color: #efefef; border: 1px solid rgba(255, 255, 255, 0.1); }
 #cinemaBtn { background: #333; color: white; border: 1px solid #444; padding: 8px 12px; border-radius: 5px; cursor: pointer; font-size: 13px; }
 #headerNextBtn { background: #ff1f1f; color: white; border: none; padding: 8px 15px; border-radius: 5px; font-size: 14px; cursor: pointer; display: none; }
-
 .search-bar { height: 50px; padding: 0 20px; background: #111; display: flex; gap: 10px; align-items: center; transition: 0.2s; }
 .search-bar.hidden { height: 0; padding: 0; overflow: hidden; opacity: 0; }
 .search-bar input { flex: 1; padding: 8px; border-radius: 5px; border: 1px solid #444; background: #222; color: white; display: none; }
-
 .container { display: flex; height: calc(100vh - 110px); transition: height 0.3s ease; }
 .container.full-height { height: calc(100vh - 60px); }
-
 .sidebar { width: 340px; min-width: 340px; background: #141414; padding: 10px; overflow-y: auto; border-right: 1px solid #222; box-sizing: border-box; }
 .sidebar.hidden { margin-left: -340px; opacity: 0; }
-
 .video-area { flex: 1; background: #000; position: relative; }
 .video-area iframe { width: 100%; height: 100%; border: none; }
-
-/* --- ITEMS & ICONS --- */
-.item { padding: 12px; margin: 8px 0; background: #222; border-radius: 8px; cursor: pointer; position: relative; transition: 0.2s; border: 1px solid transparent; display: flex; align-items: center; justify-content: space-between; }
+.item { padding: 12px; margin: 8px 0; background: #222; border-radius: 8px; cursor: pointer; position: relative; transition: 0.2s; display: flex; align-items: center; justify-content: space-between; border: 1px solid transparent; }
 .item:hover { background: #2a2a2a; }
-.item.active { background: #ff1f1f; }
+.item.active { background: #ff1f1f; border-color: rgba(255,255,255,0.2); }
 .item.watched { opacity: 0.4; }
 .item.active.watched { opacity: 1; }
-
-.item-right-controls { display: flex; align-items: center; gap: 8px; }
-
-/* STYLE DU CHAMP TIMECODE */
-.time-input {
-    background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); color: #aaa;
-    width: 50px; padding: 4px; border-radius: 4px; font-size: 11px; text-align: center; outline: none; transition: 0.2s;
-}
-.time-input:focus { border-color: #ff1f1f; color: white; background: rgba(0,0,0,0.6); }
-.active .time-input { background: rgba(255,255,255,0.2); border-color: rgba(255,255,255,0.3); color: white; }
-
-.status-icon { 
-    background: rgba(0,0,0,0.4); width: 24px; height: 24px; 
-    display: flex; align-items: center; justify-content: center; border-radius: 6px; 
-    font-size: 16px; color: white; transition: 0.2s;
-}
-.watched .status-icon { color: #4CAF50; background: rgba(76, 175, 80, 0.15); font-size: 14px; }
-
-.resume-card { padding: 12px; margin: 8px 0; background: #1a1a1a; border-radius: 10px; border-left: 3px solid #ff1f1f; position: relative; cursor: pointer; transition: 0.2s; }
-.resume-card:hover { background: #222; }
-.badge-creator { background: rgba(255,31,31,0.2); color: #ff1f1f; padding: 2px 6px; border-radius: 4px; font-weight: bold; font-size: 9px; text-transform: uppercase; }
-
-.delete-resume {
-    position: absolute; right: 10px; top: 10px; width: 20px; height: 20px;
-    background: rgba(255,255,255,0.05); color: #666; border-radius: 50%;
-    display: flex; align-items: center; justify-content: center; font-size: 10px; transition: 0.2s;
-}
-.delete-resume:hover { background: #ff1f1f; color: white; }
-
-.unmark-btn {
-    width: 100%; padding: 12px; margin-top: 15px; 
-    background: transparent; color: #555; border: 1px dashed #333; 
-    border-radius: 8px; cursor: pointer; font-size: 12px; transition: 0.2s;
-}
-.unmark-btn:hover { border-color: #ff1f1f; color: #ff1f1f; }
-
+.time-input { background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); color: #aaa; width: 50px; padding: 4px; border-radius: 4px; font-size: 11px; text-align: center; outline: none; }
+.status-icon { background: rgba(0,0,0,0.4); width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; border-radius: 6px; color: white; }
+.watched .status-icon { color: #4CAF50; background: rgba(76, 175, 80, 0.15); }
+.resume-card { padding: 12px; margin: 8px 0; background: #1a1a1a; border-radius: 10px; border-left: 3px solid #ff1f1f; position: relative; cursor: pointer; }
+.delete-resume { position: absolute; right: 10px; top: 10px; width: 20px; height: 20px; background: rgba(255,255,255,0.05); color: #666; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; }
+.unmark-btn { width: 100%; padding: 12px; margin-top: 15px; background: transparent; color: #555; border: 1px dashed #333; border-radius: 8px; cursor: pointer; font-size: 12px; }
 hr { border: 0; height: 1px; background: #333; margin: 15px 0; }
 </style>
 </head>
-
 <body>
 
 <header>
-    <div class="header-left">🎬 My Netflix <span style="color:#ff1f1f; margin-left:5px;">V19.9.2</span></div>
+    <div class="header-left">🎬 My Netflix <span style="color:#ff1f1f; margin-left:5px;">V21.0</span></div>
     <div class="header-center"><span id="currentEpisodeDisplay"></span></div>
     <div class="header-right">
         <button id="cinemaBtn" onclick="toggleCinema()">🎬 Mode Cinéma</button>
@@ -101,40 +54,43 @@ hr { border: 0; height: 1px; background: #333; margin: 15px 0; }
 </div>
 
 <div class="container" id="mainContainer">
-    <div class="sidebar" id="list"></div>
+    <div class="sidebar" id="list">Chargement du catalogue...</div>
     <div class="video-area" id="videoArea">
         <div style="display:flex; height:100%; align-items:center; justify-content:center; opacity:0.3;">Sélectionne une vidéo</div>
     </div>
 </div>
 
 <script>
-const data = {
-  femimars: {
-    name: "FemiMars",
-    categories: {
-      hxh: { title: "Hunter X Hunter", videos: [
-          { id: "ff4xt7", title: "HXH 1-14" }, { id: "qj7ins", title: "HXH 15-21" },
-          { id: "eiufho", title: "HXH 22-35" }, { id: "x4gc2f", title: "HXH 36-42" },
-          { id: "vly5md", title: "HXH 43-50" }, { id: "ua7wjr", title: "HXH 51-63" }
-      ]},
-      spiderman: { title: "Spider-Man", videos: [{ id: "ei8c8s", title: "Spider-Man 1" }, { id: "ekv47h", title: "Spider-Man 2" }]}
-    }
-  }
-};
+let data = {}; // Sera rempli par data.json
+let view = "creators", creator = null, category = null, currentVideo = null;
 
-let view = "creators", creator = null, category = null, currentVideo = null, startTime = null;
-const RESUME_KEY = "nf_res_v19_7";
-const WATCHED_KEY = "nf_wat_v19_7";
-const TIMECODE_KEY = "nf_timecodes_v19";
+// Clés Storage
+const RESUME_KEY = "nf_res_v21";
+const WATCHED_KEY = "nf_wat_v21";
+const TIMECODE_KEY = "nf_time_v21";
 
+// Helpers Storage
 const getResume = () => JSON.parse(localStorage.getItem(RESUME_KEY)) || {};
 const getWatched = () => JSON.parse(localStorage.getItem(WATCHED_KEY)) || [];
 const getTimecodes = () => JSON.parse(localStorage.getItem(TIMECODE_KEY)) || {};
 
-function saveTimecode(id, value) {
-    let t = getTimecodes();
-    t[id] = value;
-    localStorage.setItem(TIMECODE_KEY, JSON.stringify(t));
+// --- CHARGEMENT DU JSON EXTERNE ---
+async function loadDatabase() {
+    try {
+        const response = await fetch('data.json');
+        if (!response.ok) throw new Error("Fichier data.json introuvable");
+        data = await response.json();
+        
+        // Au démarrage
+        render();
+        const last = Object.values(getResume()).sort((a,b)=>b.time-a.time)[0];
+        if(last) { 
+            creator=last.creator; category=last.category; view="videos"; 
+            loadVideo(last.video, false); 
+        }
+    } catch (e) {
+        document.getElementById("list").innerHTML = `<div style="color:red; padding:20px;">Erreur: Impossible de charger data.json<br><small>${e.message}</small></div>`;
+    }
 }
 
 function deepSearch() {
@@ -143,14 +99,11 @@ function deepSearch() {
     const list = document.getElementById("list");
     list.innerHTML = `<div style="font-size:10px; opacity:0.4; margin:10px 0 5px 5px; font-weight:bold;">RÉSULTATS</div>`;
     Object.keys(data).forEach(cK => {
-        const creatorName = data[cK].name;
         Object.keys(data[cK].categories).forEach(catK => {
-            const categoryTitle = data[cK].categories[catK].title;
             data[cK].categories[catK].videos.forEach(v => {
-                if(v.title.toLowerCase().includes(val) || categoryTitle.toLowerCase().includes(val) || creatorName.toLowerCase().includes(val)) {
-                    const el = document.createElement("div");
-                    el.className = "item";
-                    el.innerHTML = `<div><span>▶ ${v.title}</span><br><small style="opacity:0.5; font-size:10px;">👤 ${creatorName} • 📁 ${categoryTitle}</small></div>`;
+                if(v.title.toLowerCase().includes(val) || data[cK].name.toLowerCase().includes(val)) {
+                    const el = document.createElement("div"); el.className = "item";
+                    el.innerHTML = `<div>▶ ${v.title}</div><small style="opacity:0.4; font-size:10px;">${data[cK].name} • ${data[cK].categories[catK].title}</small>`;
                     el.onclick = () => { creator = cK; category = catK; view = "videos"; loadVideo(v); };
                     list.appendChild(el);
                 }
@@ -159,27 +112,16 @@ function deepSearch() {
     });
 }
 
-function toggleCinema() {
-    const isCinema = document.querySelector(".sidebar").classList.toggle("hidden");
-    document.getElementById("searchBarArea").classList.toggle("hidden");
-    document.getElementById("mainContainer").classList.toggle("full-height");
-    document.getElementById("cinemaBtn").innerHTML = isCinema ? "📂 Afficher Liste" : "🎬 Mode Cinéma";
-}
-
 function loadVideo(v, markOldAsDone = false) {
     if(!v) return;
     if (markOldAsDone && currentVideo) {
-        let watched = getWatched();
-        if(!watched.includes(currentVideo.id)) {
-            watched.push(currentVideo.id);
-            localStorage.setItem(WATCHED_KEY, JSON.stringify(watched));
-        }
+        let w = getWatched(); if(!w.includes(currentVideo.id)) w.push(currentVideo.id);
+        localStorage.setItem(WATCHED_KEY, JSON.stringify(w));
     }
     currentVideo = v;
-    startTime = Date.now();
     const display = document.getElementById("currentEpisodeDisplay");
-    display.innerText = v.title;
-    display.style.display = "inline-block";
+    display.innerText = v.title; display.style.display = "inline-block";
+    
     const resume = getResume();
     resume[creator + "__" + category] = { 
         video: v, creator, creatorName: data[creator].name,
@@ -187,31 +129,47 @@ function loadVideo(v, markOldAsDone = false) {
         category, time: Date.now() 
     };
     localStorage.setItem(RESUME_KEY, JSON.stringify(resume));
+    
     document.getElementById("videoArea").innerHTML = `<iframe src="https://cdn.embedly.com/widgets/media.html?src=https%3A%2F%2Fstreamable.com%2Fo%2F${v.id}&display_name=Streamable&url=${encodeURIComponent("https://streamable.com/"+v.id)}&key=96a16496e36611e091d14040d3dc5c07&type=text%2Fhtml&schema=streamable" allowfullscreen scrolling="no"></iframe>`;
     checkNextVideo();
     render();
 }
 
+function saveTimecode(id, value) {
+    let t = getTimecodes(); t[id] = value;
+    localStorage.setItem(TIMECODE_KEY, JSON.stringify(t));
+}
+
+function toggleWatched(id, event) {
+    event.stopPropagation();
+    let w = getWatched();
+    if (w.includes(id)) w = w.filter(i => i !== id); else w.push(id);
+    localStorage.setItem(WATCHED_KEY, JSON.stringify(w));
+    render();
+}
+
 function deleteFromResume(key, event) {
     event.stopPropagation();
-    let resume = getResume();
-    delete resume[key];
-    localStorage.setItem(RESUME_KEY, JSON.stringify(resume));
+    let r = getResume(); delete r[key];
+    localStorage.setItem(RESUME_KEY, JSON.stringify(r));
     render();
 }
 
 function unmarkAllInCategory() {
     if(!confirm("Réinitialiser les épisodes vus ici ?")) return;
-    let watched = getWatched();
-    const currentVideos = data[creator].categories[category].videos;
-    const idsToRemove = currentVideos.map(v => v.id);
-    watched = watched.filter(id => !idsToRemove.includes(id));
-    localStorage.setItem(WATCHED_KEY, JSON.stringify(watched));
+    let w = getWatched();
+    const currentVideos = data[creator].categories[category].videos.map(v => v.id);
+    w = w.filter(id => !currentVideos.includes(id));
+    localStorage.setItem(WATCHED_KEY, JSON.stringify(w));
     render();
 }
 
-function handleListClick(v) {
-    loadVideo(v, false);
+function checkNextVideo() {
+    const btn = document.getElementById("headerNextBtn");
+    if (!currentVideo || !category) return;
+    const vids = data[creator].categories[category].videos;
+    const idx = vids.findIndex(v => v.id === currentVideo.id);
+    btn.style.display = (idx !== -1 && idx < vids.length - 1) ? "block" : "none";
 }
 
 function loadNextVideo() {
@@ -220,21 +178,11 @@ function loadNextVideo() {
     if (idx !== -1 && idx < vids.length - 1) loadVideo(vids[idx + 1], true);
 }
 
-function checkNextVideo() {
-    const btn = document.getElementById("headerNextBtn");
-    if (!currentVideo || !category) { btn.style.display = "none"; return; }
-    const vids = data[creator].categories[category].videos;
-    const idx = vids.findIndex(v => v.id === currentVideo.id);
-    btn.style.display = (idx !== -1 && idx < vids.length - 1) ? "block" : "none";
-}
-
-function toggleWatched(id, event) {
-    if(event) event.stopPropagation();
-    let watched = getWatched();
-    if (watched.includes(id)) watched = watched.filter(i => i !== id);
-    else watched.push(id);
-    localStorage.setItem(WATCHED_KEY, JSON.stringify(watched));
-    render();
+function toggleCinema() {
+    const isCinema = document.querySelector(".sidebar").classList.toggle("hidden");
+    document.getElementById("searchBarArea").classList.toggle("hidden");
+    document.getElementById("mainContainer").classList.toggle("full-height");
+    document.getElementById("cinemaBtn").innerHTML = isCinema ? "📂 Afficher Liste" : "🎬 Mode Cinéma";
 }
 
 function render() {
@@ -257,7 +205,7 @@ function render() {
             list.innerHTML += `<div style="font-size:10px; opacity:0.4; margin:10px 0 5px 5px; font-weight:bold;">REPRENDRE</div>`;
             last.forEach(([k, item]) => {
                 const el = document.createElement("div"); el.className = "resume-card";
-                el.innerHTML = `<div class="delete-resume" title="Supprimer">✕</div><div style="font-weight:bold;">${item.video.title}</div><div style="margin-top:5px;"><span class="badge-creator">${item.creatorName}</span> <small style="opacity:0.5">• ${item.categoryName}</small></div>`;
+                el.innerHTML = `<div class="delete-resume">✕</div><div style="font-weight:bold;">${item.video.title}</div><small style="opacity:0.5;">${item.creatorName} • ${item.categoryName}</small>`;
                 el.onclick = () => { creator=item.creator; category=item.category; view="videos"; loadVideo(item.video, false); };
                 el.querySelector('.delete-resume').onclick = (e) => deleteFromResume(k, e);
                 list.appendChild(el);
@@ -277,30 +225,20 @@ function render() {
         });
     } else if (view === "videos") {
         data[creator].categories[category].videos.forEach(v => {
-            const el = document.createElement("div"); 
             const isW = watched.includes(v.id);
-            const savedTime = timecodes[v.id] || "";
+            const el = document.createElement("div"); 
             el.className = `item ${currentVideo?.id === v.id ? 'active' : ''} ${isW ? 'watched' : ''}`;
-            
-            el.innerHTML = `
-                <span>▶ ${v.title}</span>
-                <div class="item-right-controls">
-                    <input type="text" class="time-input" placeholder="0:00" value="${savedTime}" 
-                        onclick="event.stopPropagation()" 
-                        oninput="saveTimecode('${v.id}', this.value)">
+            el.innerHTML = `<span>▶ ${v.title}</span>
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <input type="text" class="time-input" placeholder="0:00" value="${timecodes[v.id] || ''}" onclick="event.stopPropagation()" oninput="saveTimecode('${v.id}', this.value)">
                     <div class="status-icon">${isW ? '✓' : '+'}</div>
-                </div>
-            `;
-            
-            el.onclick = () => handleListClick(v);
+                </div>`;
+            el.onclick = () => loadVideo(v);
             el.querySelector('.status-icon').onclick = (e) => toggleWatched(v.id, e);
             list.appendChild(el);
         });
-        const unmarkBtn = document.createElement("button");
-        unmarkBtn.className = "unmark-btn";
-        unmarkBtn.innerText = "♻ Réinitialiser la série";
-        unmarkBtn.onclick = unmarkAllInCategory;
-        list.appendChild(unmarkBtn);
+        const rBtn = document.createElement("button"); rBtn.className = "unmark-btn"; rBtn.innerText = "♻ Réinitialiser la série";
+        rBtn.onclick = unmarkAllInCategory; list.appendChild(rBtn);
     }
 }
 
@@ -310,9 +248,7 @@ document.addEventListener("DOMContentLoaded", () => {
         inp.style.display = (inp.style.display === "block") ? "none" : "block";
         if(inp.style.display === "block") inp.focus();
     };
-    render();
-    const last = Object.values(getResume()).sort((a,b)=>b.time-a.time)[0];
-    if(last) { creator=last.creator; category=last.category; view="videos"; loadVideo(last.video, false); }
+    loadDatabase();
 });
 </script>
 </body>
