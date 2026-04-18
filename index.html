@@ -3,9 +3,12 @@
 <head>
 <meta charset="UTF-8" />
 <title>My Netflix V21.0 - DATABASE MODE</title>
+<link rel="icon" href="data:,">
+
+<script src="https://cdn.embed.ly/player-0.1.0.min.js"></script>
 
 <style>
-/* --- BASE & LAYOUT (Ton Design Parfait) --- */
+/* --- BASE & LAYOUT --- */
 html, body { height: 100%; overflow: hidden; margin: 0; font-family: 'Segoe UI', Roboto, Arial, sans-serif; background: #000; color: white; user-select: none; }
 header { height: 60px; padding: 0 20px; background: rgba(0,0,0,0.95); border-bottom: 1px solid #333; display: flex; justify-content: space-between; align-items: center; position: relative; z-index: 10000; }
 .header-left { flex: 1; display: flex; align-items: center; font-size: 18px; font-weight: bold; }
@@ -28,9 +31,25 @@ header { height: 60px; padding: 0 20px; background: rgba(0,0,0,0.95); border-bot
 .item.active { background: #ff1f1f; border-color: rgba(255,255,255,0.2); }
 .item.watched { opacity: 0.4; }
 .item.active.watched { opacity: 1; }
-.time-input { background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); color: #aaa; width: 50px; padding: 4px; border-radius: 4px; font-size: 11px; text-align: center; outline: none; }
-.status-icon { background: rgba(0,0,0,0.4); width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; border-radius: 6px; color: white; }
+
+.time-input { background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); color: #fff; width: 65px; padding: 4px; border-radius: 4px; font-size: 11px; text-align: center; outline: none; }
+
+.status-icon { 
+    background: rgba(0,0,0,0.4); 
+    width: 24px; 
+    height: 24px; 
+    display: inline-flex; 
+    align-items: center; 
+    justify-content: center; 
+    border-radius: 6px; 
+    color: white; 
+    font-size: 16px;
+    line-height: 0;
+    font-weight: bold;
+    transition: all 0.2s ease;
+}
 .watched .status-icon { color: #4CAF50; background: rgba(76, 175, 80, 0.15); }
+
 .resume-card { padding: 12px; margin: 8px 0; background: #1a1a1a; border-radius: 10px; border-left: 3px solid #ff1f1f; position: relative; cursor: pointer; }
 .delete-resume { position: absolute; right: 10px; top: 10px; width: 20px; height: 20px; background: rgba(255,255,255,0.05); color: #666; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; }
 .unmark-btn { width: 100%; padding: 12px; margin-top: 15px; background: transparent; color: #555; border: 1px dashed #333; border-radius: 8px; cursor: pointer; font-size: 12px; }
@@ -61,27 +80,47 @@ hr { border: 0; height: 1px; background: #333; margin: 15px 0; }
 </div>
 
 <script>
-let data = {}; // Sera rempli par data.json
-let view = "creators", creator = null, category = null, currentVideo = null;
+// --- NETTOYAGE CONSOLE ---
+const originalError = console.error;
+console.error = function(...args) {
+    if (args[0] && typeof args[0] === 'string' && (args[0].includes('WebSocket') || args[0].includes('socket'))) return;
+    originalError.apply(console, args);
+};
 
-// Clés Storage
+let data = {};
+let view = "creators", creator = null, category = null, currentVideo = null;
+let player = null; // VARIABLE GLOBALE : Lien direct avec la vidéo
+
 const RESUME_KEY = "nf_res_v21";
 const WATCHED_KEY = "nf_wat_v21";
 const TIMECODE_KEY = "nf_time_v21";
 
-// Helpers Storage
 const getResume = () => JSON.parse(localStorage.getItem(RESUME_KEY)) || {};
 const getWatched = () => JSON.parse(localStorage.getItem(WATCHED_KEY)) || [];
 const getTimecodes = () => JSON.parse(localStorage.getItem(TIMECODE_KEY)) || {};
 
-// --- CHARGEMENT DU JSON EXTERNE ---
+function formatSeconds(s) {
+    if (!s || isNaN(s)) return "0:00";
+    const date = new Date(null);
+    date.setSeconds(s);
+    return s >= 3600 ? date.toISOString().substr(11, 8) : date.toISOString().substr(14, 5);
+}
+
+function parseTimeToSeconds(str) {
+    if (!str || !str.includes(':')) return 0;
+    const parts = str.split(':').reverse();
+    let sec = 0;
+    sec += parseInt(parts[0]) || 0;
+    sec += (parseInt(parts[1]) || 0) * 60;
+    if (parts[2]) sec += (parseInt(parts[2]) || 0) * 3600;
+    return sec;
+}
+
 async function loadDatabase() {
     try {
         const response = await fetch('data.json');
         if (!response.ok) throw new Error("Fichier data.json introuvable");
         data = await response.json();
-        
-        // Au démarrage
         render();
         const last = Object.values(getResume()).sort((a,b)=>b.time-a.time)[0];
         if(last) { 
@@ -89,7 +128,7 @@ async function loadDatabase() {
             loadVideo(last.video, false); 
         }
     } catch (e) {
-        document.getElementById("list").innerHTML = `<div style="color:red; padding:20px;">Erreur: Impossible de charger data.json<br><small>${e.message}</small></div>`;
+        document.getElementById("list").innerHTML = `<div style="color:red; padding:20px;">Erreur base de données</div>`;
     }
 }
 
@@ -114,10 +153,6 @@ function deepSearch() {
 
 function loadVideo(v, markOldAsDone = false) {
     if(!v) return;
-    if (markOldAsDone && currentVideo) {
-        let w = getWatched(); if(!w.includes(currentVideo.id)) w.push(currentVideo.id);
-        localStorage.setItem(WATCHED_KEY, JSON.stringify(w));
-    }
     currentVideo = v;
     const display = document.getElementById("currentEpisodeDisplay");
     display.innerText = v.title; display.style.display = "inline-block";
@@ -130,13 +165,45 @@ function loadVideo(v, markOldAsDone = false) {
     };
     localStorage.setItem(RESUME_KEY, JSON.stringify(resume));
     
-    document.getElementById("videoArea").innerHTML = `<iframe src="https://cdn.embedly.com/widgets/media.html?src=https%3A%2F%2Fstreamable.com%2Fo%2F${v.id}&display_name=Streamable&url=${encodeURIComponent("https://streamable.com/"+v.id)}&key=96a16496e36611e091d14040d3dc5c07&type=text%2Fhtml&schema=streamable" allowfullscreen scrolling="no"></iframe>`;
+    const videoUrl = `https://cdn.embedly.com/widgets/media.html?src=https%3A%2F%2Fstreamable.com%2Fe%2F${v.id}&display_name=Streamable&url=${encodeURIComponent("https://streamable.com/"+v.id)}&key=96a16496e36611e091d14040d3dc5c07&type=text%2Fhtml&schema=streamable`;
+    
+    document.getElementById("videoArea").innerHTML = `<iframe id="main-player" src="${videoUrl}" allowfullscreen scrolling="no"></iframe>`;
+    
+    const iframe = document.getElementById("main-player");
+    
+    // ON RELIE L'INSTANCE À LA VARIABLE GLOBALE PLAYER
+    player = new playerjs.Player(iframe);
+
+    player.on('ready', () => {
+        const timecodes = getTimecodes();
+        const savedTime = timecodes[v.id];
+        if (savedTime && !isNaN(savedTime)) {
+            player.setCurrentTime(parseFloat(savedTime));
+        }
+
+        player.on('timeupdate', (res) => {
+            if (res.seconds > 0) {
+                saveTimecode(v.id, res.seconds);
+                const activeInput = document.querySelector(`.item.active .time-input`);
+                if (activeInput) {
+                    activeInput.value = formatSeconds(res.seconds);
+                }
+            }
+        });
+
+        player.on('ended', () => {
+            saveTimecode(v.id, 0); 
+        });
+    });
+
     checkNextVideo();
     render();
 }
 
 function saveTimecode(id, value) {
-    let t = getTimecodes(); t[id] = value;
+    const secValue = typeof value === 'string' ? parseTimeToSeconds(value) : value;
+    let t = getTimecodes(); 
+    t[id] = secValue;
     localStorage.setItem(TIMECODE_KEY, JSON.stringify(t));
 }
 
@@ -228,9 +295,10 @@ function render() {
             const isW = watched.includes(v.id);
             const el = document.createElement("div"); 
             el.className = `item ${currentVideo?.id === v.id ? 'active' : ''} ${isW ? 'watched' : ''}`;
+            const displayTime = formatSeconds(timecodes[v.id]);
             el.innerHTML = `<span>▶ ${v.title}</span>
                 <div style="display:flex; align-items:center; gap:8px;">
-                    <input type="text" class="time-input" placeholder="0:00" value="${timecodes[v.id] || ''}" onclick="event.stopPropagation()" oninput="saveTimecode('${v.id}', this.value)">
+                    <input type="text" class="time-input" placeholder="0:00" value="${displayTime !== '0:00' ? displayTime : ''}" onclick="event.stopPropagation()" onblur="saveTimecode('${v.id}', this.value)">
                     <div class="status-icon">${isW ? '✓' : '+'}</div>
                 </div>`;
             el.onclick = () => loadVideo(v);
