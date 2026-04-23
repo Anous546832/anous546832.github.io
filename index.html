@@ -3,13 +3,13 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>My Netflix V21.0 - DATABASE MODE</title>
+<title>My Netflix V21.1 - RESPONSIVE FIX</title>
 <link rel="icon" href="data:,">
 
 <script src="https://cdn.embed.ly/player-0.1.0.min.js"></script>
 
 <style>
-/* --- BASE & LAYOUT RESPONSIVE --- */
+/* --- BASE & LAYOUT --- */
 html, body { 
     height: 100%; 
     margin: 0; 
@@ -18,7 +18,7 @@ html, body {
     color: white; 
     user-select: none;
     display: flex;
-    flex-direction: column; /* Organise le header, search et container verticalement */
+    flex-direction: column; 
     overflow: hidden;
 }
 
@@ -34,8 +34,8 @@ header {
     z-index: 10000; 
 }
 
-.header-left { flex: 1; font-size: 16px; font-weight: bold; white-space: nowrap; }
-.header-center { flex: 2; text-align: center; overflow: hidden; }
+.header-left { flex: 1; font-size: 16px; font-weight: bold; }
+.header-center { flex: 2; text-align: center; }
 .header-right { flex: 1; display: flex; gap: 8px; align-items: center; justify-content: flex-end; }
 
 #currentEpisodeDisplay { 
@@ -44,22 +44,13 @@ header {
     padding: 4px 12px; 
     border-radius: 8px; 
     font-size: 12px; 
-    white-space: nowrap;
-    text-overflow: ellipsis;
-    overflow: hidden;
-    max-width: 90%;
 }
 
-#cinemaBtn, #headerNextBtn { 
-    padding: 6px 10px; 
-    border-radius: 5px; 
-    cursor: pointer; 
-    font-size: 12px; 
-    white-space: nowrap;
-}
+#cinemaBtn, #headerNextBtn { padding: 6px 10px; border-radius: 5px; cursor: pointer; font-size: 12px; }
 #cinemaBtn { background: #333; color: white; border: 1px solid #444; }
 #headerNextBtn { background: #ff1f1f; color: white; border: none; display: none; }
 
+/* BARRE DE RECHERCHE CORRIGÉE */
 .search-bar { 
     height: 50px; 
     padding: 0 20px; 
@@ -67,16 +58,23 @@ header {
     display: flex; 
     gap: 10px; 
     align-items: center; 
-    transition: 0.2s;
+    transition: all 0.3s ease; /* Transition pour le mode cinéma */
     flex-shrink: 0;
+    overflow: hidden;
 }
-.search-bar.hidden { height: 0; padding: 0; overflow: hidden; opacity: 0; }
+.search-bar.hidden { 
+    height: 0; 
+    padding-top: 0; 
+    padding-bottom: 0; 
+    opacity: 0; 
+    border: none;
+}
 .search-bar input { flex: 1; padding: 8px; border-radius: 5px; border: 1px solid #444; background: #222; color: white; display: none; }
 
 /* CONTAINER PRINCIPAL */
 .container { 
     display: flex; 
-    flex: 1; /* Prend tout l'espace restant */
+    flex: 1; 
     overflow: hidden;
     position: relative;
 }
@@ -89,26 +87,19 @@ header {
     overflow-y: auto; 
     border-right: 1px solid #222; 
     box-sizing: border-box;
-    transition: margin-left 0.3s ease, opacity 0.3s ease;
+    transition: all 0.3s ease;
 }
 .sidebar.hidden { margin-left: -340px; opacity: 0; }
 
 .video-area { 
     flex: 1; 
     background: #000; 
-    position: relative;
     display: flex;
     align-items: center;
     justify-content: center;
 }
 
-/* L'iframe s'adapte à la zone disponible sans dépasser */
-.video-area iframe { 
-    width: 100%; 
-    height: 100%; 
-    max-height: 100%;
-    border: none; 
-}
+.video-area iframe { width: 100%; height: 100%; border: none; }
 
 /* ÉLÉMENTS DE LISTE */
 .item { padding: 12px; margin: 8px 0; background: #222; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: space-between; transition: 0.2s; border: 1px solid transparent; }
@@ -123,6 +114,7 @@ header {
     background: rgba(0,0,0,0.4); width: 24px; height: 24px; 
     display: inline-flex; align-items: center; justify-content: center; 
     border-radius: 6px; color: white; font-size: 16px; font-weight: bold; 
+    line-height: 0;
 }
 .watched .status-icon { color: #4CAF50; background: rgba(76, 175, 80, 0.15); }
 
@@ -131,30 +123,19 @@ header {
 .unmark-btn { width: 100%; padding: 12px; margin-top: 15px; background: transparent; color: #555; border: 1px dashed #333; border-radius: 8px; cursor: pointer; font-size: 12px; }
 hr { border: 0; height: 1px; background: #333; margin: 15px 0; }
 
-/* --- MEDIA QUERIES MOBILE --- */
 @media (max-width: 768px) {
-    .sidebar {
-        width: 100%;
-        min-width: 100%;
-        position: absolute; /* Superpose la liste sur la vidéo sur mobile */
-        left: 0;
-        top: 0;
-        bottom: 0;
-        z-index: 5000;
-    }
+    .sidebar { width: 100%; min-width: 100%; position: absolute; left: 0; top: 0; bottom: 0; z-index: 5000; }
     .sidebar.hidden { margin-left: -100%; }
-    .header-left { font-size: 14px; }
-    #cinemaBtn { font-size: 10px; }
 }
 </style>
 </head>
 <body>
 
 <header>
-    <div class="header-left">🎬 My Netflix <span style="color:#ff1f1f; margin-left:5px;">V21.0</span></div>
+    <div class="header-left">🎬 My Netflix <span style="color:#ff1f1f; margin-left:5px;">V21.1</span></div>
     <div class="header-center"><span id="currentEpisodeDisplay"></span></div>
     <div class="header-right">
-        <button id="cinemaBtn" onclick="toggleCinema()">📂 Menu</button>
+        <button id="cinemaBtn" onclick="toggleCinema()">🎬 Mode Cinéma</button>
         <button id="headerNextBtn" onclick="loadNextVideo()">Suivant ➔</button>
     </div>
 </header>
@@ -172,6 +153,7 @@ hr { border: 0; height: 1px; background: #333; margin: 15px 0; }
 </div>
 
 <script>
+// --- LOGIQUE JS ---
 const originalError = console.error;
 console.error = function(...args) {
     if (args[0] && typeof args[0] === 'string' && (args[0].includes('WebSocket') || args[0].includes('socket'))) return;
@@ -334,9 +316,20 @@ function loadNextVideo() {
     if (idx !== -1 && idx < vids.length - 1) loadVideo(vids[idx + 1], true);
 }
 
+// FONCTION CINÉMA CORRIGÉE
 function toggleCinema() {
-    const isCinema = document.querySelector(".sidebar").classList.toggle("hidden");
-    document.getElementById("cinemaBtn").innerHTML = isCinema ? "📂 Menu" : "🎬 Mode Cinéma";
+    const sidebar = document.getElementById("list");
+    const searchBar = document.getElementById("searchBarArea");
+    const isHidden = sidebar.classList.toggle("hidden");
+    
+    // On synchronise la barre de recherche avec la sidebar
+    if (isHidden) {
+        searchBar.classList.add("hidden");
+    } else {
+        searchBar.classList.remove("hidden");
+    }
+    
+    document.getElementById("cinemaBtn").innerHTML = isHidden ? "📂 Afficher Liste" : "🎬 Mode Cinéma";
 }
 
 function render() {
