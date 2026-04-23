@@ -2,51 +2,127 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>My Netflix V21.0 - DATABASE MODE</title>
 <link rel="icon" href="data:,">
 
 <script src="https://cdn.embed.ly/player-0.1.0.min.js"></script>
 
 <style>
-/* --- BASE & LAYOUT --- */
-html, body { height: 100%; overflow: hidden; margin: 0; font-family: 'Segoe UI', Roboto, Arial, sans-serif; background: #000; color: white; user-select: none; }
-header { height: 60px; padding: 0 20px; background: rgba(0,0,0,0.95); border-bottom: 1px solid #333; display: flex; justify-content: space-between; align-items: center; position: relative; z-index: 10000; }
-.header-left { flex: 1; display: flex; align-items: center; font-size: 18px; font-weight: bold; }
-.header-center { flex: 2; text-align: center; }
-.header-right { flex: 1; display: flex; gap: 12px; align-items: center; justify-content: flex-end; }
-#currentEpisodeDisplay { display: none; background: rgba(40, 40, 40, 0.6); backdrop-filter: blur(10px); padding: 6px 20px; border-radius: 8px; font-size: 14px; color: #efefef; border: 1px solid rgba(255, 255, 255, 0.1); }
-#cinemaBtn { background: #333; color: white; border: 1px solid #444; padding: 8px 12px; border-radius: 5px; cursor: pointer; font-size: 13px; }
-#headerNextBtn { background: #ff1f1f; color: white; border: none; padding: 8px 15px; border-radius: 5px; font-size: 14px; cursor: pointer; display: none; }
-.search-bar { height: 50px; padding: 0 20px; background: #111; display: flex; gap: 10px; align-items: center; transition: 0.2s; }
+/* --- BASE & LAYOUT RESPONSIVE --- */
+html, body { 
+    height: 100%; 
+    margin: 0; 
+    font-family: 'Segoe UI', Roboto, Arial, sans-serif; 
+    background: #000; 
+    color: white; 
+    user-select: none;
+    display: flex;
+    flex-direction: column; /* Organise le header, search et container verticalement */
+    overflow: hidden;
+}
+
+header { 
+    height: 60px; 
+    min-height: 60px;
+    padding: 0 15px; 
+    background: rgba(0,0,0,0.95); 
+    border-bottom: 1px solid #333; 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+    z-index: 10000; 
+}
+
+.header-left { flex: 1; font-size: 16px; font-weight: bold; white-space: nowrap; }
+.header-center { flex: 2; text-align: center; overflow: hidden; }
+.header-right { flex: 1; display: flex; gap: 8px; align-items: center; justify-content: flex-end; }
+
+#currentEpisodeDisplay { 
+    display: none; 
+    background: rgba(40, 40, 40, 0.6); 
+    padding: 4px 12px; 
+    border-radius: 8px; 
+    font-size: 12px; 
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    max-width: 90%;
+}
+
+#cinemaBtn, #headerNextBtn { 
+    padding: 6px 10px; 
+    border-radius: 5px; 
+    cursor: pointer; 
+    font-size: 12px; 
+    white-space: nowrap;
+}
+#cinemaBtn { background: #333; color: white; border: 1px solid #444; }
+#headerNextBtn { background: #ff1f1f; color: white; border: none; display: none; }
+
+.search-bar { 
+    height: 50px; 
+    padding: 0 20px; 
+    background: #111; 
+    display: flex; 
+    gap: 10px; 
+    align-items: center; 
+    transition: 0.2s;
+    flex-shrink: 0;
+}
 .search-bar.hidden { height: 0; padding: 0; overflow: hidden; opacity: 0; }
 .search-bar input { flex: 1; padding: 8px; border-radius: 5px; border: 1px solid #444; background: #222; color: white; display: none; }
-.container { display: flex; height: calc(100vh - 110px); transition: height 0.3s ease; }
-.container.full-height { height: calc(100vh - 60px); }
-.sidebar { width: 340px; min-width: 340px; background: #141414; padding: 10px; overflow-y: auto; border-right: 1px solid #222; box-sizing: border-box; }
+
+/* CONTAINER PRINCIPAL */
+.container { 
+    display: flex; 
+    flex: 1; /* Prend tout l'espace restant */
+    overflow: hidden;
+    position: relative;
+}
+
+.sidebar { 
+    width: 340px; 
+    min-width: 340px; 
+    background: #141414; 
+    padding: 10px; 
+    overflow-y: auto; 
+    border-right: 1px solid #222; 
+    box-sizing: border-box;
+    transition: margin-left 0.3s ease, opacity 0.3s ease;
+}
 .sidebar.hidden { margin-left: -340px; opacity: 0; }
-.video-area { flex: 1; background: #000; position: relative; }
-.video-area iframe { width: 100%; height: 100%; border: none; }
-.item { padding: 12px; margin: 8px 0; background: #222; border-radius: 8px; cursor: pointer; position: relative; transition: 0.2s; display: flex; align-items: center; justify-content: space-between; border: 1px solid transparent; }
+
+.video-area { 
+    flex: 1; 
+    background: #000; 
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* L'iframe s'adapte à la zone disponible sans dépasser */
+.video-area iframe { 
+    width: 100%; 
+    height: 100%; 
+    max-height: 100%;
+    border: none; 
+}
+
+/* ÉLÉMENTS DE LISTE */
+.item { padding: 12px; margin: 8px 0; background: #222; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: space-between; transition: 0.2s; border: 1px solid transparent; }
 .item:hover { background: #2a2a2a; }
-.item.active { background: #ff1f1f; border-color: rgba(255,255,255,0.2); }
+.item.active { background: #ff1f1f; }
 .item.watched { opacity: 0.4; }
 .item.active.watched { opacity: 1; }
 
-.time-input { background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); color: #fff; width: 65px; padding: 4px; border-radius: 4px; font-size: 11px; text-align: center; outline: none; }
+.time-input { background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); color: #fff; width: 60px; padding: 4px; border-radius: 4px; font-size: 11px; text-align: center; }
 
 .status-icon { 
-    background: rgba(0,0,0,0.4); 
-    width: 24px; 
-    height: 24px; 
-    display: inline-flex; 
-    align-items: center; 
-    justify-content: center; 
-    border-radius: 6px; 
-    color: white; 
-    font-size: 16px;
-    line-height: 0;
-    font-weight: bold;
-    transition: all 0.2s ease;
+    background: rgba(0,0,0,0.4); width: 24px; height: 24px; 
+    display: inline-flex; align-items: center; justify-content: center; 
+    border-radius: 6px; color: white; font-size: 16px; font-weight: bold; 
 }
 .watched .status-icon { color: #4CAF50; background: rgba(76, 175, 80, 0.15); }
 
@@ -54,6 +130,22 @@ header { height: 60px; padding: 0 20px; background: rgba(0,0,0,0.95); border-bot
 .delete-resume { position: absolute; right: 10px; top: 10px; width: 20px; height: 20px; background: rgba(255,255,255,0.05); color: #666; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; }
 .unmark-btn { width: 100%; padding: 12px; margin-top: 15px; background: transparent; color: #555; border: 1px dashed #333; border-radius: 8px; cursor: pointer; font-size: 12px; }
 hr { border: 0; height: 1px; background: #333; margin: 15px 0; }
+
+/* --- MEDIA QUERIES MOBILE --- */
+@media (max-width: 768px) {
+    .sidebar {
+        width: 100%;
+        min-width: 100%;
+        position: absolute; /* Superpose la liste sur la vidéo sur mobile */
+        left: 0;
+        top: 0;
+        bottom: 0;
+        z-index: 5000;
+    }
+    .sidebar.hidden { margin-left: -100%; }
+    .header-left { font-size: 14px; }
+    #cinemaBtn { font-size: 10px; }
+}
 </style>
 </head>
 <body>
@@ -62,7 +154,7 @@ hr { border: 0; height: 1px; background: #333; margin: 15px 0; }
     <div class="header-left">🎬 My Netflix <span style="color:#ff1f1f; margin-left:5px;">V21.0</span></div>
     <div class="header-center"><span id="currentEpisodeDisplay"></span></div>
     <div class="header-right">
-        <button id="cinemaBtn" onclick="toggleCinema()">🎬 Mode Cinéma</button>
+        <button id="cinemaBtn" onclick="toggleCinema()">📂 Menu</button>
         <button id="headerNextBtn" onclick="loadNextVideo()">Suivant ➔</button>
     </div>
 </header>
@@ -80,7 +172,6 @@ hr { border: 0; height: 1px; background: #333; margin: 15px 0; }
 </div>
 
 <script>
-// --- NETTOYAGE CONSOLE ---
 const originalError = console.error;
 console.error = function(...args) {
     if (args[0] && typeof args[0] === 'string' && (args[0].includes('WebSocket') || args[0].includes('socket'))) return;
@@ -89,7 +180,7 @@ console.error = function(...args) {
 
 let data = {};
 let view = "creators", creator = null, category = null, currentVideo = null;
-let player = null; // VARIABLE GLOBALE : Lien direct avec la vidéo
+let player = null;
 
 const RESUME_KEY = "nf_res_v21";
 const WATCHED_KEY = "nf_wat_v21";
@@ -143,7 +234,7 @@ function deepSearch() {
                 if(v.title.toLowerCase().includes(val) || data[cK].name.toLowerCase().includes(val)) {
                     const el = document.createElement("div"); el.className = "item";
                     el.innerHTML = `<div>▶ ${v.title}</div><small style="opacity:0.4; font-size:10px;">${data[cK].name} • ${data[cK].categories[catK].title}</small>`;
-                    el.onclick = () => { creator = cK; category = catK; view = "videos"; loadVideo(v); };
+                    el.onclick = () => { creator = cK; category = catK; view = "videos"; loadVideo(v); if(window.innerWidth < 768) toggleCinema(); };
                     list.appendChild(el);
                 }
             });
@@ -170,8 +261,6 @@ function loadVideo(v, markOldAsDone = false) {
     document.getElementById("videoArea").innerHTML = `<iframe id="main-player" src="${videoUrl}" allowfullscreen scrolling="no"></iframe>`;
     
     const iframe = document.getElementById("main-player");
-    
-    // ON RELIE L'INSTANCE À LA VARIABLE GLOBALE PLAYER
     player = new playerjs.Player(iframe);
 
     player.on('ready', () => {
@@ -247,9 +336,7 @@ function loadNextVideo() {
 
 function toggleCinema() {
     const isCinema = document.querySelector(".sidebar").classList.toggle("hidden");
-    document.getElementById("searchBarArea").classList.toggle("hidden");
-    document.getElementById("mainContainer").classList.toggle("full-height");
-    document.getElementById("cinemaBtn").innerHTML = isCinema ? "📂 Afficher Liste" : "🎬 Mode Cinéma";
+    document.getElementById("cinemaBtn").innerHTML = isCinema ? "📂 Menu" : "🎬 Mode Cinéma";
 }
 
 function render() {
@@ -273,7 +360,7 @@ function render() {
             last.forEach(([k, item]) => {
                 const el = document.createElement("div"); el.className = "resume-card";
                 el.innerHTML = `<div class="delete-resume">✕</div><div style="font-weight:bold;">${item.video.title}</div><small style="opacity:0.5;">${item.creatorName} • ${item.categoryName}</small>`;
-                el.onclick = () => { creator=item.creator; category=item.category; view="videos"; loadVideo(item.video, false); };
+                el.onclick = () => { creator=item.creator; category=item.category; view="videos"; loadVideo(item.video, false); if(window.innerWidth < 768) toggleCinema(); };
                 el.querySelector('.delete-resume').onclick = (e) => deleteFromResume(k, e);
                 list.appendChild(el);
             });
@@ -301,7 +388,7 @@ function render() {
                     <input type="text" class="time-input" placeholder="0:00" value="${displayTime !== '0:00' ? displayTime : ''}" onclick="event.stopPropagation()" onblur="saveTimecode('${v.id}', this.value)">
                     <div class="status-icon">${isW ? '✓' : '+'}</div>
                 </div>`;
-            el.onclick = () => loadVideo(v);
+            el.onclick = () => { loadVideo(v); if(window.innerWidth < 768) toggleCinema(); };
             el.querySelector('.status-icon').onclick = (e) => toggleWatched(v.id, e);
             list.appendChild(el);
         });
