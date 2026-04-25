@@ -3,401 +3,2751 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>My Netflix V21.1 - RESPONSIVE FIX</title>
-<link rel="icon" href="data:,">
-
+<title>StreamVault</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎬</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.embed.ly/player-0.1.0.min.js"></script>
 
 <style>
-/* --- BASE & LAYOUT --- */
-html, body { 
-    height: 100%; 
-    margin: 0; 
-    font-family: 'Segoe UI', Roboto, Arial, sans-serif; 
-    background: #000; 
-    color: white; 
-    user-select: none;
-    display: flex;
-    flex-direction: column; 
-    overflow: hidden;
+/* ═══════════════════════════════════════════
+   VARIABLES & RESET
+═══════════════════════════════════════════ */
+:root {
+  --bg:        #0a0a0c;
+  --bg2:       #111116;
+  --bg3:       #18181f;
+  --border:    rgba(255,255,255,0.07);
+  --red:       #e8192c;
+  --red-dim:   rgba(232,25,44,0.15);
+  --red-glow:  rgba(232,25,44,0.35);
+  --text:      #e8e8f0;
+  --text-dim:  rgba(232,232,240,0.45);
+  --text-mid:  rgba(232,232,240,0.7);
+  --green:     #22c55e;
+  --sidebar-w: 320px;
+  --header-h:  58px;
+  --font-title: 'Bebas Neue', sans-serif;
+  --font-body:  'DM Sans', sans-serif;
+  --radius:    10px;
+  --transition: 0.25s cubic-bezier(0.4,0,0.2,1);
 }
 
-header { 
-    height: 60px; 
-    min-height: 60px;
-    padding: 0 15px; 
-    background: rgba(0,0,0,0.95); 
-    border-bottom: 1px solid #333; 
-    display: flex; 
-    justify-content: space-between; 
-    align-items: center; 
-    z-index: 10000; 
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100%;
+  font-family: var(--font-body);
+  background: var(--bg);
+  color: var(--text);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  user-select: none;
 }
 
-.header-left { flex: 1; font-size: 16px; font-weight: bold; }
-.header-center { flex: 2; text-align: center; }
-.header-right { flex: 1; display: flex; gap: 8px; align-items: center; justify-content: flex-end; }
+.sidebar::before, header::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.5;
+}
+header { position: relative; }
 
-#currentEpisodeDisplay { 
-    display: none; 
-    background: rgba(40, 40, 40, 0.6); 
-    padding: 4px 12px; 
-    border-radius: 8px; 
-    font-size: 12px; 
+/* ═══════════════════════════════════════════
+   HEADER
+═══════════════════════════════════════════ */
+header {
+  height: var(--header-h);
+  min-height: var(--header-h);
+  padding: 0 20px;
+  background: rgba(10,10,12,0.97);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  z-index: 1000;
+  flex-shrink: 0;
+  backdrop-filter: blur(20px);
 }
 
-#cinemaBtn, #headerNextBtn { padding: 6px 10px; border-radius: 5px; cursor: pointer; font-size: 12px; }
-#cinemaBtn { background: #333; color: white; border: 1px solid #444; }
-#headerNextBtn { background: #ff1f1f; color: white; border: none; display: none; }
-
-/* BARRE DE RECHERCHE CORRIGÉE */
-.search-bar { 
-    height: 50px; 
-    padding: 0 20px; 
-    background: #111; 
-    display: flex; 
-    gap: 10px; 
-    align-items: center; 
-    transition: all 0.3s ease; /* Transition pour le mode cinéma */
-    flex-shrink: 0;
-    overflow: hidden;
-}
-.search-bar.hidden { 
-    height: 0; 
-    padding-top: 0; 
-    padding-bottom: 0; 
-    opacity: 0; 
-    border: none;
-}
-.search-bar input { flex: 1; padding: 8px; border-radius: 5px; border: 1px solid #444; background: #222; color: white; display: none; }
-
-/* CONTAINER PRINCIPAL */
-.container { 
-    display: flex; 
-    flex: 1; 
-    overflow: hidden;
-    position: relative;
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-title);
+  font-size: 22px;
+  letter-spacing: 2px;
+  color: var(--text);
 }
 
-.sidebar { 
-    width: 340px; 
-    min-width: 340px; 
-    background: #141414; 
-    padding: 10px; 
-    overflow-y: auto; 
-    border-right: 1px solid #222; 
-    box-sizing: border-box;
-    transition: all 0.3s ease;
-}
-.sidebar.hidden { margin-left: -340px; opacity: 0; }
-
-.video-area { 
-    flex: 1; 
-    background: #000; 
-    display: flex;
-    align-items: center;
-    justify-content: center;
+.logo-icon {
+  width: 28px;
+  height: 28px;
+  background: var(--red);
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  box-shadow: 0 0 12px var(--red-glow);
 }
 
-.video-area iframe { width: 100%; height: 100%; border: none; }
+.logo span { color: var(--red); }
 
-/* ÉLÉMENTS DE LISTE */
-.item { padding: 12px; margin: 8px 0; background: #222; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: space-between; transition: 0.2s; border: 1px solid transparent; }
-.item:hover { background: #2a2a2a; }
-.item.active { background: #ff1f1f; }
-.item.watched { opacity: 0.4; }
+.header-center {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  padding: 0 20px;
+}
+
+/* ── Chapitre Info dans le header ────────────────────────────────────── */
+#chapterDisplay {
+  display: none;
+  align-items: center;
+  gap: 6px;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  padding: 6px 0 6px 14px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-mid);
+  max-width: 380px;
+  cursor: pointer;
+  transition: all var(--transition);
+}
+#chapterDisplay:hover {
+  background: var(--bg2);
+  border-color: rgba(255,255,255,0.15);
+}
+#chapterDisplay .chapter-label {
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 1.2px;
+  color: var(--red);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+#chapterDisplay .chapter-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+#chapterDisplay .chapter-arrow {
+  color: var(--text-dim);
+  font-size: 16px;
+  padding: 0 8px 0 2px;
+  transition: transform var(--transition);
+}
+#chapterDisplay.open .chapter-arrow {
+  transform: rotate(180deg);
+}
+
+/* ── Dropdown des chapitres ──────────────────────────────────────────── */
+.chapter-dropdown {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-top: 4px;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: 0 12px 40px rgba(0,0,0,0.6);
+  backdrop-filter: blur(20px);
+  z-index: 2000;
+  min-width: 260px;
+  max-width: 360px;
+  max-height: 400px;
+  overflow: hidden;
+  animation: dropdownIn 0.2s ease;
+}
+@keyframes dropdownIn {
+  from { opacity: 0; transform: translateX(-50%) translateY(-8px); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+.chapter-dropdown.active {
+  display: flex;
+  flex-direction: column;
+}
+.chapter-dropdown-header {
+  padding: 12px 14px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 1.5px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.chapter-dropdown-scroll {
+  overflow-y: auto;
+  flex: 1;
+}
+.chapter-dropdown-scroll::-webkit-scrollbar { width: 4px; }
+.chapter-dropdown-scroll::-webkit-scrollbar-track { background: transparent; }
+.chapter-dropdown-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
+
+/* ── Item chapitre dans le dropdown ──────────────────────────────────── */
+.chapter-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  cursor: pointer;
+  transition: all var(--transition);
+  border-left: 2px solid transparent;
+}
+.chapter-item:hover {
+  background: var(--bg3);
+}
+.chapter-item.current {
+  background: var(--red-dim);
+  border-left-color: var(--red);
+}
+.chapter-item.current .chapter-item-title {
+  color: white;
+}
+.chapter-item-num {
+  width: 27px;
+  height: 27px;
+  border-radius: 7px;
+  background: var(--bg3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-dim);
+  flex-shrink: 0;
+  transition: all var(--transition);
+}
+.chapter-item.current .chapter-item-num {
+  background: var(--red);
+  color: white;
+}
+.chapter-item-info {
+  flex: 1;
+  overflow: hidden;
+}
+.chapter-item-title {
+  font-size: 12px;
+  color: var(--text-mid);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-weight: 400;
+}
+.chapter-item-time {
+  font-size: 10px;
+  color: var(--text-dim);
+  font-family: monospace;
+}
+.chapter-item-status {
+  font-size: 11px;
+  flex-shrink: 0;
+}
+
+/* ── Autres parties du header ────────────────────────────────────────── */
+.header-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.btn {
+  padding: 7px 14px;
+  border-radius: var(--radius);
+  cursor: pointer;
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 500;
+  transition: all var(--transition);
+  border: none;
+  letter-spacing: 0.3px;
+}
+
+.btn-ghost {
+  background: var(--bg3);
+  color: var(--text-mid);
+  border: 1px solid var(--border);
+}
+.btn-ghost:hover { background: var(--bg2); color: var(--text); border-color: rgba(255,255,255,0.15); }
+
+.btn-primary {
+  background: var(--red);
+  color: white;
+  box-shadow: 0 0 14px var(--red-glow);
+}
+.btn-primary:hover { background: #ff2a3d; transform: translateY(-1px); box-shadow: 0 2px 18px var(--red-glow); }
+
+#headerNextBtn { display: none; }
+
+/* ═══════════════════════════════════════════
+   SEARCH BAR
+═══════════════════════════════════════════ */
+.search-wrap {
+  height: 52px;
+  min-height: 52px;
+  background: var(--bg2);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  gap: 12px;
+  flex-shrink: 0;
+  transition: all var(--transition);
+  overflow: hidden;
+}
+
+.search-wrap.cinema-hidden {
+  height: 0;
+  min-height: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+  border: none;
+  opacity: 0;
+}
+
+#searchInput {
+  flex: 1;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 8px 14px;
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 13px;
+  outline: none;
+  transition: border-color var(--transition);
+}
+#searchInput:focus { border-color: rgba(232,25,44,0.4); }
+#searchInput::placeholder { color: var(--text-dim); }
+
+.search-icon {
+  color: var(--text-dim);
+  font-size: 14px;
+  pointer-events: none;
+}
+
+/* ═══════════════════════════════════════════
+   MAIN LAYOUT
+═══════════════════════════════════════════ */
+.container {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+}
+
+/* ═══════════════════════════════════════════
+   SIDEBAR
+═══════════════════════════════════════════ */
+.sidebar {
+  width: var(--sidebar-w);
+  min-width: var(--sidebar-w);
+  background: var(--bg2);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition: all var(--transition);
+  flex-shrink: 0;
+}
+
+.sidebar.hidden {
+  width: 0;
+  min-width: 0;
+  border-right: none;
+  opacity: 0;
+}
+
+/* Breadcrumb */
+.breadcrumb {
+  padding: 12px 14px 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--text-dim);
+  flex-shrink: 0;
+  flex-wrap: wrap;
+  min-height: 36px;
+}
+.crumb { cursor: pointer; transition: color var(--transition); }
+.crumb:hover { color: var(--text); }
+.crumb.active { color: var(--text-mid); cursor: default; }
+.crumb-sep { opacity: 0.3; }
+
+.sidebar-scroll {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 10px 16px;
+}
+.sidebar-scroll::-webkit-scrollbar { width: 4px; }
+.sidebar-scroll::-webkit-scrollbar-track { background: transparent; }
+.sidebar-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
+.sidebar-scroll::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
+
+/* Section labels */
+.section-label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 1.5px;
+  color: var(--text-dim);
+  padding: 10px 6px 6px;
+  text-transform: uppercase;
+}
+
+/* ═══════════════════════════════════════════
+   LIST ITEMS
+═══════════════════════════════════════════ */
+/* Indicateur de reprise */
+.item.resume-marked {
+  border-left: 2px solid rgba(232,25,44,0.4);
+}
+
+.item.resume-marked .item-icon {
+  background: var(--red-dim);
+}
+
+.item {
+  padding: 10px 12px;
+  margin: 2px 0;
+  background: transparent;
+  border-radius: var(--radius);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transition: all var(--transition);
+  border: 1px solid transparent;
+  position: relative;
+  gap: 8px;
+}
+
+.item:hover {
+  background: var(--bg3);
+  border-color: var(--border);
+}
+
+.item.active {
+  background: var(--red-dim);
+  border-color: rgba(232,25,44,0.3);
+}
+
+.item.active .item-title { color: white; }
+
+.item.watched { opacity: 0.38; }
 .item.active.watched { opacity: 1; }
 
-.time-input { background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); color: #fff; width: 60px; padding: 4px; border-radius: 4px; font-size: 11px; text-align: center; }
+.item-left { display: flex; align-items: center; gap: 10px; overflow: hidden; flex: 1; }
 
-.status-icon { 
-    background: rgba(0,0,0,0.4); width: 24px; height: 24px; 
-    display: inline-flex; align-items: center; justify-content: center; 
-    border-radius: 6px; color: white; font-size: 16px; font-weight: bold; 
-    line-height: 0;
+.item-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+  background: var(--bg3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  flex-shrink: 0;
+  transition: background var(--transition);
 }
-.watched .status-icon { color: #4CAF50; background: rgba(76, 175, 80, 0.15); }
+.item.active .item-icon { background: var(--red); }
 
-.resume-card { padding: 12px; margin: 8px 0; background: #1a1a1a; border-radius: 10px; border-left: 3px solid #ff1f1f; position: relative; cursor: pointer; }
-.delete-resume { position: absolute; right: 10px; top: 10px; width: 20px; height: 20px; background: rgba(255,255,255,0.05); color: #666; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; }
-.unmark-btn { width: 100%; padding: 12px; margin-top: 15px; background: transparent; color: #555; border: 1px dashed #333; border-radius: 8px; cursor: pointer; font-size: 12px; }
-hr { border: 0; height: 1px; background: #333; margin: 15px 0; }
+.item-title {
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--text-mid);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: color var(--transition);
+}
+.item:hover .item-title { color: var(--text); }
 
+.item-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+/* Time input */
+.time-input {
+  background: rgba(0,0,0,0.3);
+  border: 1px solid rgba(255,255,255,0.08);
+  color: var(--text-dim);
+  width: 68px;
+  padding: 3px 6px;
+  border-radius: 5px;
+  font-size: 11px;
+  text-align: center;
+  font-family: monospace;
+  transition: all var(--transition);
+}
+.time-input:focus { outline: none; border-color: var(--red); color: var(--text); }
+
+/* Status icon */
+.status-icon {
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  cursor: pointer;
+  transition: all var(--transition);
+  flex-shrink: 0;
+}
+.status-icon:hover { background: rgba(232,25,44,0.2); border-color: var(--red); }
+.watched .status-icon { background: rgba(34,197,94,0.15); border-color: rgba(34,197,94,0.4); color: var(--green); }
+
+/* Back button */
+.back-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  margin: 0 0 4px 0;
+  border-radius: var(--radius);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-dim);
+  background: transparent;
+  border: none;
+  width: 100%;
+  text-align: left;
+  transition: all var(--transition);
+  font-family: var(--font-body);
+}
+.back-btn:hover { color: var(--text); background: var(--bg3); }
+
+/* Resume cards */
+.resume-card {
+  padding: 10px 12px;
+  margin: 3px 0;
+  background: var(--bg3);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  border-left: 2px solid var(--red);
+  cursor: pointer;
+  transition: all var(--transition);
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+.resume-card:hover { background: #1e1e27; border-color: rgba(232,25,44,0.4); transform: translateX(2px); }
+
+.resume-thumb {
+  width: 32px;
+  height: 32px;
+  border-radius: 7px;
+  background: var(--red-dim);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+.resume-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.resume-info { flex: 1; overflow: hidden; }
+.resume-title { font-size: 12px; font-weight: 500; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.resume-sub { font-size: 10px; color: var(--text-dim); margin-top: 2px; }
+
+.resume-delete {
+  width: 18px;
+  height: 18px;
+  background: transparent;
+  color: var(--text-dim);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  flex-shrink: 0;
+  transition: all var(--transition);
+  cursor: pointer;
+  border: none;
+}
+.resume-delete:hover { background: rgba(232,25,44,0.2); color: var(--red); }
+
+.divider { height: 1px; background: var(--border); margin: 10px 4px; }
+
+/* Reset button */
+.reset-btn {
+  width: 100%;
+  padding: 10px;
+  margin-top: 10px;
+  background: transparent;
+  color: var(--text-dim);
+  border: 1px dashed rgba(255,255,255,0.1);
+  border-radius: var(--radius);
+  cursor: pointer;
+  font-size: 11px;
+  font-family: var(--font-body);
+  transition: all var(--transition);
+  letter-spacing: 0.5px;
+}
+.reset-btn:hover { color: var(--red); border-color: rgba(232,25,44,0.3); background: var(--red-dim); }
+
+/* ═══════════════════════════════════════════
+   VIDEO AREA
+═══════════════════════════════════════════ */
+.video-area {
+  flex: 1;
+  background: #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.video-area iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
+/* Empty state */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  opacity: 0;
+  animation: fadeIn 0.8s 0.3s ease forwards;
+}
+
+@keyframes fadeIn {
+  to { opacity: 1; }
+}
+
+.empty-icon {
+  width: 80px;
+  height: 80px;
+  border-radius: 20px;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+}
+
+.empty-title {
+  font-family: var(--font-title);
+  font-size: 28px;
+  letter-spacing: 3px;
+  color: var(--text-dim);
+}
+
+.empty-sub {
+  font-size: 13px;
+  color: var(--text-dim);
+  opacity: 0.6;
+}
+
+/* Next episode overlay */
+#nextOverlay {
+  display: none;
+  position: absolute;
+  bottom: 30px;
+  right: 30px;
+  background: rgba(10,10,12,0.92);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px 20px;
+  backdrop-filter: blur(20px);
+  animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+  from { transform: translateY(10px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+#nextOverlay p { font-size: 11px; color: var(--text-dim); margin-bottom: 8px; letter-spacing: 0.5px; }
+#nextOverlay .next-title { font-size: 14px; font-weight: 500; color: var(--text); margin-bottom: 12px; }
+#nextOverlay .btn { width: 100%; text-align: center; }
+
+/* ═══════════════════════════════════════════
+   SEARCH RESULTS
+═══════════════════════════════════════════ */
+.search-result-sub {
+  font-size: 10px;
+  color: var(--text-dim);
+  margin-top: 1px;
+}
+
+/* ═══════════════════════════════════════════
+   CATEGORY GRID VIEW
+═══════════════════════════════════════════ */
+.cat-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.cat-card {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px;
+  cursor: pointer;
+  transition: all var(--transition);
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  text-align: left;
+}
+
+.cat-card::before {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  top: 0;
+  width: 3px;
+  background: var(--red);
+  transform: scaleY(0);
+  transition: transform var(--transition);
+}
+
+.cat-card:hover {
+  background: #1e1e27;
+  border-color: rgba(255,255,255,0.12);
+  transform: translateX(4px);
+}
+
+.cat-card:hover::before { transform: scaleY(1); }
+
+.cat-card-icon {
+  width: 80px;
+  height: 80px;
+  border-radius: 10px;
+  background: var(--bg2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26px;
+  flex-shrink: 0;
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+.cat-card-icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.cat-card-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.cat-card-title { 
+  font-size: 13px; 
+  font-weight: 600; 
+  color: var(--text); 
+  letter-spacing: 0.5px; 
+  margin-bottom: 4px;
+}
+.cat-card-count { 
+  font-size: 11px; 
+  color: var(--text-dim); 
+  margin-top: 3px; 
+}
+
+/* ═══════════════════════════════════════════
+   SAGAS & ARCS
+═══════════════════════════════════════════ */
+.saga-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 12px;
+  margin: 4px 0;
+  cursor: pointer;
+  border-radius: var(--radius);
+  transition: all var(--transition);
+  user-select: none;
+}
+.saga-header:hover {
+  background: var(--bg3);
+}
+
+.saga-icon {
+  font-size: 12px;
+  color: var(--text-dim);
+  transition: transform var(--transition);
+  width: 16px;
+  text-align: center;
+  flex-shrink: 0;
+}
+.saga-header.open .saga-icon {
+  transform: rotate(90deg);
+}
+
+.saga-info {
+  flex: 1;
+  min-width: 0;
+}
+.saga-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+}
+.saga-count {
+  font-size: 10px;
+  color: var(--text-dim);
+  margin-top: 2px;
+}
+
+.saga-content {
+  overflow: hidden;
+  max-height: 0;
+  transition: max-height 0.3s ease;
+}
+.saga-content.open {
+  max-height: 5000px;
+}
+
+.arc-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 12px 6px 28px;
+  margin-top: 4px;
+}
+.arc-header:first-child {
+  margin-top: 0;
+}
+.arc-header-line {
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+  opacity: 0.5;
+}
+.arc-header-title {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 1.5px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  white-space: nowrap;
+  padding: 4px 10px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+}
+.arc-header-count {
+  font-size: 10px;
+  color: var(--text-dim);
+  opacity: 0.6;
+}
+
+/* Indentation des vidéos dans une saga */
+.item.saga-indented {
+  padding-left: 28px;
+}
+/* ═══════════════════════════════════════════
+   MOBILE
+═══════════════════════════════════════════ */
 @media (max-width: 768px) {
-    .sidebar { width: 100%; min-width: 100%; position: absolute; left: 0; top: 0; bottom: 0; z-index: 5000; }
-    .sidebar.hidden { margin-left: -100%; }
+  :root { --sidebar-w: 100%; }
+  .sidebar {
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    z-index: 500;
+  }
+  .sidebar.hidden {
+    width: 0;
+    min-width: 0;
+    opacity: 0;
+  }
+  .logo-text { display: none; }
+  #nextOverlay { bottom: 10px; right: 10px; left: 10px; }
+  .chapter-dropdown {
+    left: 10px;
+    right: 10px;
+    transform: none;
+    min-width: auto;
+    max-width: none;
+  }
+  @keyframes dropdownInMob {
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .chapter-dropdown.active {
+    animation: dropdownInMob 0.2s ease;
+  }
 }
+
+/* ═══════════════════════════════════════════
+   SCROLLBAR GLOBAL
+═══════════════════════════════════════════ */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+/* ═══════════════════════════════════════════
+   MODE DÉVELOPPEUR
+═══════════════════════════════════════════ */
+.dev-badge {
+  display: none;
+  position: fixed;
+  top: 8px;
+  right: 50%;
+  transform: translateX(50%);
+  background: #ff8800;
+  color: #000;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 12px;
+  z-index: 9999;
+  letter-spacing: 1px;
+  animation: pulse 2s infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+.dev-badge.active { display: block; }
+
+.dev-panel {
+  display: none;
+  position: absolute;
+  bottom: 20px;
+  left: 20px;
+  right: 20px;
+  background: rgba(10,10,12,0.95);
+  border: 1px solid #ff8800;
+  border-radius: var(--radius);
+  padding: 16px;
+  z-index: 2000;
+  backdrop-filter: blur(20px);
+  animation: slideIn 0.3s ease;
+}
+.dev-panel.active { display: block; }
+
+.dev-panel-title {
+  font-size: 11px;
+  font-weight: 600;
+  color: #ff8800;
+  letter-spacing: 1px;
+  margin-bottom: 12px;
+  text-transform: uppercase;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.dev-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+  align-items: center;
+}
+
+.dev-input {
+  flex: 1;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px 12px;
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 12px;
+  outline: none;
+  transition: border-color var(--transition);
+}
+.dev-input:focus { border-color: #ff8800; }
+.dev-input::placeholder { color: var(--text-dim); font-size: 11px; }
+
+.dev-input-time {
+  width: 90px;
+  flex: none;
+  text-align: center;
+  font-family: monospace;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px 6px;
+  color: #ff8800;
+  font-size: 12px;
+  outline: none;
+}
+.dev-input-time:focus { border-color: #ff8800; }
+
+.dev-chapter-list {
+  max-height: 200px;
+  overflow-y: auto;
+  margin: 12px 0;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg2);
+}
+.dev-chapter-list::-webkit-scrollbar { width: 4px; }
+.dev-chapter-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
+
+.dev-chapter-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  font-size: 11px;
+  border-bottom: 1px solid var(--border);
+  gap: 10px;
+}
+.dev-chapter-item:last-child { border-bottom: none; }
+.dev-chapter-item .dev-chapter-time {
+  color: #ff8800;
+  font-family: monospace;
+  flex-shrink: 0;
+}
+.dev-chapter-item .dev-chapter-name {
+  flex: 1;
+  color: var(--text-mid);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dev-chapter-delete {
+  background: transparent;
+  border: none;
+  color: var(--text-dim);
+  cursor: pointer;
+  font-size: 14px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  transition: all var(--transition);
+}
+.dev-chapter-delete:hover { color: var(--red); background: rgba(232,25,44,0.15); }
+
+.dev-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.btn-dev {
+  padding: 8px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  border: none;
+  transition: all var(--transition);
+}
+.btn-dev-add {
+  background: #ff8800;
+  color: #000;
+}
+.btn-dev-add:hover { background: #ffa033; }
+.btn-dev-export {
+  background: var(--bg3);
+  color: #ff8800;
+  border: 1px solid #ff8800;
+  flex: 1;
+}
+.btn-dev-export:hover { background: rgba(255,136,0,0.1); }
+.btn-dev-close {
+  background: transparent;
+  color: var(--text-dim);
+  border: 1px solid var(--border);
+}
+.btn-dev-close:hover { color: var(--text); border-color: rgba(255,255,255,0.2); }
+.btn-dev-grab {
+  background: #ff8800;
+  color: #000;
+  font-size: 10px;
+  padding: 6px 10px;
+}
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 2px; }
 </style>
 </head>
 <body>
 
+<!-- HEADER -->
 <header>
-    <div class="header-left">🎬 My Netflix <span style="color:#ff1f1f; margin-left:5px;">V21.1</span></div>
-    <div class="header-center"><span id="currentEpisodeDisplay"></span></div>
-    <div class="header-right">
-        <button id="cinemaBtn" onclick="toggleCinema()">🎬 Mode Cinéma</button>
-        <button id="headerNextBtn" onclick="loadNextVideo()">Suivant ➔</button>
+  <div class="logo">
+    <div class="logo-icon">▶</div>
+    <span class="logo-text">STREAM<span>VAULT</span></span>
+  </div>
+
+  <div class="header-center">
+    <!-- Nouveau composant de chapitres -->
+    <div id="chapterDisplay" onclick="toggleChapterDropdown(event)">
+      <span class="chapter-label">CHAPITRE</span>
+      <span class="chapter-title" id="chapterTitleDisplay">—</span>
+      <span class="chapter-arrow">▾</span>
     </div>
+    <!-- Dropdown (injecté dynamiquement) -->
+    <div class="chapter-dropdown" id="chapterDropdown"></div>
+  </div>
+
+  <div class="header-actions">
+    <button class="btn btn-ghost" id="cinemaBtn" onclick="toggleCinema()">⊞ Cinéma</button>
+    <button class="btn btn-ghost" id="devModeBtn" onclick="toggleDevMode()" title="Mode développeur (Ctrl+Shift+D)">🛠</button>
+    <button class="btn btn-primary" id="headerNextBtn" onclick="loadNextVideoOrChapter()">Suivant →</button>
+  </div>
 </header>
 
-<div class="search-bar" id="searchBarArea">
-  <button id="searchBtn" style="background:#333; color:white; border:none; padding:6px 12px; border-radius:4px; cursor:pointer;">🔍 Rechercher</button>
-  <input id="search" oninput="deepSearch()" placeholder="Rechercher partout..." />
+<!-- SEARCH BAR -->
+<div class="search-wrap" id="searchBarArea">
+  <span class="search-icon">🔍</span>
+  <input type="text" id="searchInput" placeholder="Rechercher dans tout le catalogue..." oninput="deepSearch()" />
+  <button class="btn btn-ghost" id="clearSearchBtn" style="display:none" onclick="clearSearch()">✕</button>
 </div>
 
-<div class="container" id="mainContainer">
-    <div class="sidebar" id="list">Chargement du catalogue...</div>
-    <div class="video-area" id="videoArea">
-        <div style="display:flex; height:100%; align-items:center; justify-content:center; opacity:0.3;">Sélectionne une vidéo</div>
+<!-- MAIN -->
+<div class="container">
+
+  <div class="sidebar" id="list">
+    <div class="breadcrumb" id="breadcrumb"></div>
+    <div class="sidebar-scroll" id="sidebarScroll">
+      <div style="color:var(--text-dim); font-size:13px; padding:20px;">Chargement…</div>
     </div>
+  </div>
+
+  <div class="video-area" id="videoArea">
+    <div class="empty-state">
+      <div class="empty-icon">🎬</div>
+      <div class="empty-title">STREAMVAULT</div>
+      <div class="empty-sub">Sélectionne une vidéo pour commencer</div>
+    </div>
+  </div>
+
+  <!-- Next ep overlay -->
+  <div id="nextOverlay">
+    <p>SUIVANT</p>
+    <div class="next-title" id="nextTitle">—</div>
+    <button class="btn btn-primary" onclick="loadNextVideoOrChapter()">Regarder maintenant →</button>
+  </div>
+
+  <!-- Badge mode dev -->
+  <div class="dev-badge" id="devBadge">🛠 MODE DEV</div>
+
+  <!-- Panneau développeur -->
+  <div class="dev-panel" id="devPanel">
+    <div class="dev-panel-title">
+      <span>🛠 Ajouter un chapitre</span>
+      <button class="btn-dev btn-dev-close" onclick="closeDevPanel()">✕</button>
+    </div>
+    <div class="dev-row">
+      <input type="text" class="dev-input-time" id="devTimeInput" placeholder="00:00" />
+      <button class="btn-dev btn-dev-grab" onclick="grabCurrentTime()" title="Prendre le timecode actuel">⏱️</button>
+      <input type="text" class="dev-input" id="devTitleInput" placeholder="Nom du chapitre (ex: Épisode 4 - Examen)" />
+      <button class="btn-dev btn-dev-add" onclick="addChapter()">+ Ajouter</button>
+    </div>
+    <div class="dev-chapter-list" id="devChapterList">
+      <div style="color:var(--text-dim); font-size:11px; padding:12px; text-align:center;">Aucun chapitre ajouté</div>
+    </div>
+    <div class="dev-actions" style="flex-wrap:wrap;">
+      <button class="btn-dev btn-dev-export" onclick="exportDataJson()">📥 Exporter data.json</button>
+      <button class="btn-dev btn-dev-export" onclick="copyProgress()">📋 Copier progression</button>
+      <button class="btn-dev btn-dev-export" onclick="importProgress()">📥 Importer progression</button>
+      <button class="btn-dev btn-dev-close" onclick="clearDevChapters()">🗑 Effacer tout</button>
+    </div>
+  </div>
+
 </div>
 
 <script>
-// --- LOGIQUE JS ---
-const originalError = console.error;
-console.error = function(...args) {
-    if (args[0] && typeof args[0] === 'string' && (args[0].includes('WebSocket') || args[0].includes('socket'))) return;
-    originalError.apply(console, args);
+// ─── Silence WebSocket errors ────────────────────────────────────────────────
+const _origErr = console.error;
+console.error = (...a) => {
+  if (typeof a[0] === 'string' && (a[0].includes('WebSocket') || a[0].includes('socket'))) return;
+  _origErr.apply(console, a);
 };
 
+// ─── State ───────────────────────────────────────────────────────────────────
 let data = {};
 let view = "creators", creator = null, category = null, currentVideo = null;
+let currentCreator = null, currentCategory = null;
 let player = null;
+let cinemaMode = false;
+let isSearching = false;
+let currentChapterIndex = 0;
+let chapterDropdownOpen = false;
+let openSagas = {}; // Sauvegarde quelles sagas sont ouvertes
+let skipAutoScroll = false;
 
-const RESUME_KEY = "nf_res_v21";
-const WATCHED_KEY = "nf_wat_v21";
-const TIMECODE_KEY = "nf_time_v21";
+const RESUME_KEY   = "sv_res_v1";
+const WATCHED_KEY  = "sv_wat_v1";
+const TIMECODE_KEY = "sv_time_v1";
 
-const getResume = () => JSON.parse(localStorage.getItem(RESUME_KEY)) || {};
-const getWatched = () => JSON.parse(localStorage.getItem(WATCHED_KEY)) || [];
+const getResume    = () => JSON.parse(localStorage.getItem(RESUME_KEY))   || {};
+const getWatched   = () => JSON.parse(localStorage.getItem(WATCHED_KEY))  || [];
 const getTimecodes = () => JSON.parse(localStorage.getItem(TIMECODE_KEY)) || {};
 
+// ─── Helpers ─────────────────────────────────────────────────────────────────
 function formatSeconds(s) {
-    if (!s || isNaN(s)) return "0:00";
-    const date = new Date(null);
-    date.setSeconds(s);
-    return s >= 3600 ? date.toISOString().substr(11, 8) : date.toISOString().substr(14, 5);
+  if (!s || isNaN(s) || s < 1) return "";
+  const d = new Date(null);
+  d.setSeconds(Math.floor(s));
+  return s >= 3600 ? d.toISOString().substr(11, 8) : d.toISOString().substr(14, 5);
 }
 
 function parseTimeToSeconds(str) {
-    if (!str || !str.includes(':')) return 0;
-    const parts = str.split(':').reverse();
-    let sec = 0;
-    sec += parseInt(parts[0]) || 0;
-    sec += (parseInt(parts[1]) || 0) * 60;
-    if (parts[2]) sec += (parseInt(parts[2]) || 0) * 3600;
-    return sec;
+  if (!str || !str.includes(':')) return 0;
+  const p = str.split(':').reverse();
+  return (parseInt(p[0]) || 0)
+       + (parseInt(p[1]) || 0) * 60
+       + (parseInt(p[2]) || 0) * 3600;
 }
 
-async function loadDatabase() {
-    try {
-        const response = await fetch('data.json');
-        if (!response.ok) throw new Error("Fichier data.json introuvable");
-        data = await response.json();
-        render();
-        const last = Object.values(getResume()).sort((a,b)=>b.time-a.time)[0];
-        if(last) { 
-            creator=last.creator; category=last.category; view="videos"; 
-            loadVideo(last.video, false); 
-        }
-    } catch (e) {
-        document.getElementById("list").innerHTML = `<div style="color:red; padding:20px;">Erreur base de données</div>`;
+function getCategoryIcon(key, cat) {
+  // Si une image est définie dans les données, l'utiliser
+  if (cat && cat.image) {
+    return `<img src="${cat.image}" alt="${cat.title}" 
+      style="width:100%; height:100%; object-fit:cover; border-radius:inherit;" 
+      onerror="this.parentElement.textContent='📁'" />`;
+  }
+  
+  // Fallback emoji
+  const icons = {
+    hxh: '⚡', narutokai: '🍃', shippuden: '🔥', onepiece: '⚓', parasite: '🕷️'
+  };
+  return icons[key] || '📁';
+}
+
+// ─── Chapitres ───────────────────────────────────────────────────────────────
+function getChapters(video) {
+  if (!video) return [];
+  
+  // Récupérer les chapitres originaux + les chapitres dev
+  const originalChapters = (video.chapters && video.chapters.length > 0) ? video.chapters : [];
+  const devChaptersForVideo = devChapters[video.id] || [];
+  
+  // Fusionner sans doublons
+  const allChapters = [...originalChapters];
+  
+  devChaptersForVideo.forEach(devCh => {
+    // Ne pas ajouter si un chapitre existe déjà au même timecode
+    const exists = allChapters.some(ch => Math.abs(ch.start - devCh.start) < 1);
+    if (!exists) {
+      allChapters.push(devCh);
     }
+  });
+  
+  // Trier par timecode
+  allChapters.sort((a, b) => a.start - b.start);
+  
+  // Retourner les chapitres fusionnés, ou un chapitre par défaut
+  if (allChapters.length > 0) {
+    return allChapters;
+  }
+  
+  return [{
+    id: video.id + '_default',
+    title: video.title,
+    start: 0,
+    end: null
+  }];
 }
 
-function deepSearch() {
-    const val = document.getElementById("search").value.toLowerCase();
-    if(!val) { render(); return; } 
-    const list = document.getElementById("list");
-    list.innerHTML = `<div style="font-size:10px; opacity:0.4; margin:10px 0 5px 5px; font-weight:bold;">RÉSULTATS</div>`;
-    Object.keys(data).forEach(cK => {
-        Object.keys(data[cK].categories).forEach(catK => {
-            data[cK].categories[catK].videos.forEach(v => {
-                if(v.title.toLowerCase().includes(val) || data[cK].name.toLowerCase().includes(val)) {
-                    const el = document.createElement("div"); el.className = "item";
-                    el.innerHTML = `<div>▶ ${v.title}</div><small style="opacity:0.4; font-size:10px;">${data[cK].name} • ${data[cK].categories[catK].title}</small>`;
-                    el.onclick = () => { creator = cK; category = catK; view = "videos"; loadVideo(v); if(window.innerWidth < 768) toggleCinema(); };
-                    list.appendChild(el);
-                }
-            });
-        });
-    });
+function findCurrentChapterIndex(time, chapters) {
+  if (!chapters || chapters.length === 0) return 0;
+  for (let i = chapters.length - 1; i >= 0; i--) {
+    if (time >= chapters[i].start) {
+      // Vérifier si on est avant le début du chapitre suivant
+      if (i < chapters.length - 1 && time >= chapters[i + 1].start) {
+        continue;
+      }
+      return i;
+    }
+  }
+  return 0;
 }
 
-function loadVideo(v, markOldAsDone = false) {
-    if(!v) return;
-    currentVideo = v;
-    const display = document.getElementById("currentEpisodeDisplay");
-    display.innerText = v.title; display.style.display = "inline-block";
-    
-    const resume = getResume();
-    resume[creator + "__" + category] = { 
-        video: v, creator, creatorName: data[creator].name,
-        categoryName: data[creator].categories[category].title,
-        category, time: Date.now() 
+function getNextChapterOrVideo() {
+  if (!currentVideo || !currentCreator || !currentCategory) return null;
+  
+  const chapters = getChapters(currentVideo);
+  // Récupérer le timecode sauvegardé plutôt que le temps live du player
+  const timecodes = getTimecodes();
+  const currentTime = timecodes[currentVideo.id] || 0;
+  const currentIdx = findCurrentChapterIndex(currentTime, chapters);
+  
+  // S'il y a un chapitre suivant dans la même vidéo
+  if (currentIdx < chapters.length - 1) {
+    return {
+      type: 'chapter',
+      video: currentVideo,
+      chapterIndex: currentIdx + 1,
+      chapter: chapters[currentIdx + 1]
     };
-    localStorage.setItem(RESUME_KEY, JSON.stringify(resume));
-    
-    const videoUrl = `https://cdn.embedly.com/widgets/media.html?src=https%3A%2F%2Fstreamable.com%2Fe%2F${v.id}&display_name=Streamable&url=${encodeURIComponent("https://streamable.com/"+v.id)}&key=96a16496e36611e091d14040d3dc5c07&type=text%2Fhtml&schema=streamable`;
-    
-    document.getElementById("videoArea").innerHTML = `<iframe id="main-player" src="${videoUrl}" allowfullscreen scrolling="no"></iframe>`;
-    
-    const iframe = document.getElementById("main-player");
-    player = new playerjs.Player(iframe);
+  }
+  
+  // Sinon, passer à la vidéo suivante
+  const vids = data[currentCreator].categories[currentCategory].videos;
+  const vidIdx = vids.findIndex(v => v.id === currentVideo.id);
+  if (vidIdx !== -1 && vidIdx < vids.length - 1) {
+    return {
+      type: 'video',
+      video: vids[vidIdx + 1],
+      chapterIndex: 0
+    };
+  }
+  
+  return null;
+}
 
-    player.on('ready', () => {
-        const timecodes = getTimecodes();
-        const savedTime = timecodes[v.id];
-        if (savedTime && !isNaN(savedTime)) {
-            player.setCurrentTime(parseFloat(savedTime));
+// ─── Database ─────────────────────────────────────────────────────────────────
+async function loadDatabase() {
+  try {
+    const r = await fetch('data.json');
+    if (!r.ok) throw new Error(`HTTP ${r.status}: ${r.statusText}`);
+    const text = await r.text();
+    console.log("Contenu reçu:", text.substring(0, 200));
+    data = JSON.parse(text);
+    console.log("JSON parsé avec succès");
+
+    // Migrate old localStorage keys if needed
+    const oldRes = localStorage.getItem("nf_res_v21");
+    if (oldRes && !localStorage.getItem(RESUME_KEY)) {
+      localStorage.setItem(RESUME_KEY, oldRes);
+    }
+    const oldWat = localStorage.getItem("nf_wat_v21");
+    if (oldWat && !localStorage.getItem(WATCHED_KEY)) {
+      localStorage.setItem(WATCHED_KEY, oldWat);
+    }
+    const oldTime = localStorage.getItem("nf_time_v21");
+    if (oldTime && !localStorage.getItem(TIMECODE_KEY)) {
+      localStorage.setItem(TIMECODE_KEY, oldTime);
+    }
+
+    render();
+
+    // Auto-resume: restore last video on page load
+    const last = Object.values(getResume()).sort((a, b) => b.time - a.time)[0];
+    if (last && last.creator && last.category && last.video) {
+      creator = last.creator;
+      category = last.category;
+      view = "videos";
+      loadVideo(last.video, last.chapterIndex || 0);
+    }
+  } catch (e) {
+    console.error("ERREUR CHARGEMENT:", e.message);
+    document.getElementById("sidebarScroll").innerHTML =
+      `<div style="color:var(--red); padding:20px; font-size:13px;">⚠ ${e.message}</div>`;
+  }
+}
+
+// ─── Video ────────────────────────────────────────────────────────────────────
+function loadVideo(v, chapterIndex = 0) {
+  if (!v) return;
+  currentVideo = v;
+  currentCreator = creator;
+  currentCategory = category;
+  currentChapterIndex = chapterIndex;
+
+  const chapters = getChapters(v);
+  const chapter = chapters[chapterIndex] || chapters[0];
+
+  // Update header chapter display
+  updateChapterDisplay(chapter, chapters);
+
+  // Save resume
+  const resume = getResume();
+  resume[creator + "__" + category] = {
+    video: v, creator, creatorName: data[creator].name,
+    categoryName: data[creator].categories[category].title,
+    category, time: Date.now(),
+    chapterIndex: chapterIndex
+  };
+  localStorage.setItem(RESUME_KEY, JSON.stringify(resume));
+
+  // Embed
+  const url = `https://cdn.embedly.com/widgets/media.html?src=https%3A%2F%2Fstreamable.com%2Fe%2F${v.id}&display_name=Streamable&url=${encodeURIComponent("https://streamable.com/"+v.id)}&key=96a16496e36611e091d14040d3dc5c07&type=text%2Fhtml&schema=streamable`;
+  document.getElementById("videoArea").innerHTML =
+    `<iframe id="main-player" src="${url}" allowfullscreen scrolling="no"></iframe>`;
+
+  player = new playerjs.Player(document.getElementById("main-player"));
+
+  player.on('ready', () => {
+    // Restaurer le timecode de la vidéo ou aller au début du chapitre
+    const saved = getTimecodes()[v.id];
+    const targetTime = (chapterIndex > 0 && chapter.start > 0) ? chapter.start : (saved && !isNaN(saved) ? parseFloat(saved) : 0);
+    
+    if (targetTime > 0) {
+      player.setCurrentTime(targetTime);
+    }
+
+    player.on('timeupdate', res => {
+      if (res.seconds > 0) {
+        saveTimecode(v.id, res.seconds);
+        
+        // Mise à jour de l'input timecode dans la sidebar
+        const activeItem = document.querySelector('.item.active .time-input');
+        if (activeItem) {
+          activeItem.value = formatSeconds(res.seconds);
         }
-
-        player.on('timeupdate', (res) => {
-            if (res.seconds > 0) {
-                saveTimecode(v.id, res.seconds);
-                const activeInput = document.querySelector(`.item.active .time-input`);
-                if (activeInput) {
-                    activeInput.value = formatSeconds(res.seconds);
-                }
-            }
-        });
-
-        player.on('ended', () => {
-            saveTimecode(v.id, 0); 
-        });
+        
+        // Mettre à jour le chapitre actuel en temps réel
+        const newIdx = findCurrentChapterIndex(res.seconds, chapters);
+        if (newIdx !== currentChapterIndex) {
+          currentChapterIndex = newIdx;
+          updateChapterDisplay(chapters[newIdx], chapters);
+          updateChapterDropdownHighlight(newIdx);
+        }
+      }
     });
 
-    checkNextVideo();
-    render();
+    player.on('ended', () => {
+      saveTimecode(v.id, 0);
+      showNextOverlay();
+    });
+  });
+
+  checkNextVideoOrChapter();
+  render();
+
+  // On mobile: hide sidebar
+  if (window.innerWidth <= 768 && !cinemaMode) toggleCinema();
+  // Rafraîchir le panneau dev si ouvert
+  if (devMode) {
+    openDevPanel();
+  }
 }
+
+function updateChapterDisplay(chapter, chapters) {
+  const display = document.getElementById("chapterDisplay");
+  const titleDisplay = document.getElementById("chapterTitleDisplay");
+  
+  if (chapters.length <= 1) {
+    // Pas de chapitres : afficher le titre de la vidéo
+    display.style.display = "flex";
+    display.querySelector(".chapter-label").textContent = "EN COURS";
+    titleDisplay.textContent = chapter.title;
+    display.style.cursor = "default";
+    return;
+  }
+  
+  display.style.display = "flex";
+  display.querySelector(".chapter-label").textContent = "CHAPITRE";
+  titleDisplay.textContent = chapter.title;
+  display.style.cursor = "pointer";
+  
+  // Reconstruire le dropdown
+  buildChapterDropdown(chapters);
+}
+
+function buildChapterDropdown(chapters) {
+  const dropdown = document.getElementById("chapterDropdown");
+  const watched = getWatched();
+  
+  dropdown.innerHTML = `
+    <div class="chapter-dropdown-header">
+      <span>${chapters.length} chapitres</span>
+      <span style="font-weight:400;opacity:0.6;">▾</span>
+    </div>
+    <div class="chapter-dropdown-scroll">
+      ${chapters.map((ch, i) => {
+        const isCurrent = i === currentChapterIndex;
+        const isWatched = watched.includes(currentVideo.id + '_ch_' + ch.id);
+        const timeStr = ch.start > 0 ? formatSeconds(ch.start) : 'Début';
+        
+        return `
+          <div class="chapter-item ${isCurrent ? 'current' : ''}" 
+               data-chapter-index="${i}"
+               onclick="skipToChapter(${i})">
+            <div class="chapter-item-num">${i + 1}</div>
+            <div class="chapter-item-info">
+              <div class="chapter-item-title">${ch.title}</div>
+              <div class="chapter-item-time">${timeStr}</div>
+            </div>
+            <span class="chapter-item-status">${isWatched ? '✓' : ''}</span>
+          </div>
+        `;
+      }).join('')}
+    </div>
+  `;
+}
+
+function updateChapterDropdownHighlight(chapterIndex) {
+  const dropdown = document.getElementById("chapterDropdown");
+  const items = dropdown.querySelectorAll('.chapter-item');
+  items.forEach(item => {
+    item.classList.toggle('current', parseInt(item.dataset.chapterIndex) === chapterIndex);
+  });
+}
+
+function toggleChapterDropdown(e) {
+  e.stopPropagation();
+  
+  // Ne pas ouvrir si pas de chapitres
+  const chapters = currentVideo ? getChapters(currentVideo) : [];
+  if (chapters.length <= 1) return;
+  
+  const dropdown = document.getElementById("chapterDropdown");
+  const display = document.getElementById("chapterDisplay");
+  
+  chapterDropdownOpen = !chapterDropdownOpen;
+  dropdown.classList.toggle('active', chapterDropdownOpen);
+  display.classList.toggle('open', chapterDropdownOpen);
+}
+
+function skipToChapter(index) {
+  const chapters = getChapters(currentVideo);
+  if (!chapters[index]) return;
+  
+  currentChapterIndex = index;
+  const chapter = chapters[index];
+  
+  // Marquer l'ancien chapitre comme vu
+  let w = getWatched();
+  // On pourrait implémenter un marquage par chapitre ici
+  
+  // Fermer le dropdown
+  closeChapterDropdown();
+  
+  // Skiller au timecode
+  if (player) {
+    player.setCurrentTime(chapter.start);
+  }
+  
+  updateChapterDisplay(chapter, chapters);
+  updateChapterDropdownHighlight(index);
+  
+  // Sauvegarder la progression
+  saveTimecode(currentVideo.id, chapter.start);
+}
+
+function closeChapterDropdown() {
+  const dropdown = document.getElementById("chapterDropdown");
+  const display = document.getElementById("chapterDisplay");
+  chapterDropdownOpen = false;
+  dropdown.classList.remove('active');
+  display.classList.remove('open');
+}
+
+// Fermer le dropdown si on clique ailleurs
+document.addEventListener('click', (e) => {
+  if (chapterDropdownOpen && !e.target.closest('#chapterDisplay') && !e.target.closest('#chapterDropdown')) {
+    closeChapterDropdown();
+  }
+});
 
 function saveTimecode(id, value) {
-    const secValue = typeof value === 'string' ? parseTimeToSeconds(value) : value;
-    let t = getTimecodes(); 
-    t[id] = secValue;
+  const sec = typeof value === 'string' ? parseTimeToSeconds(value) : value;
+  const t = getTimecodes();
+  t[id] = sec;
+  localStorage.setItem(TIMECODE_KEY, JSON.stringify(t));
+}
+
+function toggleWatched(id, e) {
+  e.stopPropagation();
+  let w = getWatched();
+  if (w.includes(id)) {
+    w = w.filter(i => i !== id);
+  } else {
+    w.push(id);
+    const t = getTimecodes();
+    delete t[id];
     localStorage.setItem(TIMECODE_KEY, JSON.stringify(t));
+  }
+  localStorage.setItem(WATCHED_KEY, JSON.stringify(w));
+  skipAutoScroll = true;
+  render();
 }
 
-function toggleWatched(id, event) {
-    event.stopPropagation();
-    let w = getWatched();
-    if (w.includes(id)) w = w.filter(i => i !== id); else w.push(id);
-    localStorage.setItem(WATCHED_KEY, JSON.stringify(w));
-    render();
-}
-
-function deleteFromResume(key, event) {
-    event.stopPropagation();
-    let r = getResume(); delete r[key];
-    localStorage.setItem(RESUME_KEY, JSON.stringify(r));
-    render();
+function deleteFromResume(key, e) {
+  e.stopPropagation();
+  const r = getResume();
+  delete r[key];
+  localStorage.setItem(RESUME_KEY, JSON.stringify(r));
+  render();
 }
 
 function unmarkAllInCategory() {
-    if(!confirm("Réinitialiser les épisodes vus ici ?")) return;
+  if (!confirm("Réinitialiser les épisodes vus de cette série ?")) return;
+  let w = getWatched();
+  const ids = data[creator].categories[category].videos.map(v => v.id);
+  w = w.filter(id => !ids.includes(id));
+  localStorage.setItem(WATCHED_KEY, JSON.stringify(w));
+  render();
+}
+
+// ─── Next video/chapter ───────────────────────────────────────────────────────
+function checkNextVideoOrChapter() {
+  const btn = document.getElementById("headerNextBtn");
+  const overlay = document.getElementById("nextOverlay");
+  const next = getNextChapterOrVideo();
+  
+  if (!next) {
+    btn.style.display = "none";
+    overlay.style.display = "none";
+    return;
+  }
+  
+  btn.style.display = "block";
+  const label = next.type === 'chapter' ? 'Chapitre suivant →' : 'Épisode suivant →';
+  btn.textContent = label;
+  
+  document.getElementById("nextTitle").textContent = 
+    next.type === 'chapter' ? next.chapter.title : next.video.title;
+}
+
+function showNextOverlay() {
+  const overlay = document.getElementById("nextOverlay");
+  const next = getNextChapterOrVideo();
+  
+  if (next) {
+    document.getElementById("nextTitle").textContent = 
+      next.type === 'chapter' ? next.chapter.title : next.video.title;
+    overlay.querySelector('p').textContent = next.type === 'chapter' ? 'CHAPITRE SUIVANT' : 'ÉPISODE SUIVANT';
+    overlay.style.display = "block";
+  }
+}
+
+function loadNextVideoOrChapter() {
+  document.getElementById("nextOverlay").style.display = "none";
+  const next = getNextChapterOrVideo();
+  
+  if (!next) return;
+  
+  if (next.type === 'chapter') {
+    skipToChapter(next.chapterIndex);
+  } else {
+    // Vider le timecode dans tous les cas
+    if (currentVideo) {
+      const t = getTimecodes();
+      delete t[currentVideo.id];
+      localStorage.setItem(TIMECODE_KEY, JSON.stringify(t));
+    }
+    
+    // Marquer comme vu si pas déjà fait
     let w = getWatched();
-    const currentVideos = data[creator].categories[category].videos.map(v => v.id);
-    w = w.filter(id => !currentVideos.includes(id));
-    localStorage.setItem(WATCHED_KEY, JSON.stringify(w));
-    render();
+    if (currentVideo && !w.includes(currentVideo.id)) {
+      w.push(currentVideo.id);
+      localStorage.setItem(WATCHED_KEY, JSON.stringify(w));
+    }
+    
+    creator = currentCreator;
+    category = currentCategory;
+    loadVideo(next.video, 0);
+  }
 }
 
-function checkNextVideo() {
-    const btn = document.getElementById("headerNextBtn");
-    if (!currentVideo || !category) return;
-    const vids = data[creator].categories[category].videos;
-    const idx = vids.findIndex(v => v.id === currentVideo.id);
-    btn.style.display = (idx !== -1 && idx < vids.length - 1) ? "block" : "none";
-}
-
-function loadNextVideo() {
-    const vids = data[creator].categories[category].videos;
-    const idx = vids.findIndex(v => v.id === currentVideo.id);
-    if (idx !== -1 && idx < vids.length - 1) loadVideo(vids[idx + 1], true);
-}
-
-// FONCTION CINÉMA CORRIGÉE
+// ─── Cinema mode ─────────────────────────────────────────────────────────────
 function toggleCinema() {
-    const sidebar = document.getElementById("list");
-    const searchBar = document.getElementById("searchBarArea");
-    const isHidden = sidebar.classList.toggle("hidden");
-    
-    // On synchronise la barre de recherche avec la sidebar
-    if (isHidden) {
-        searchBar.classList.add("hidden");
-    } else {
-        searchBar.classList.remove("hidden");
-    }
-    
-    document.getElementById("cinemaBtn").innerHTML = isHidden ? "📂 Afficher Liste" : "🎬 Mode Cinéma";
+  cinemaMode = !cinemaMode;
+  document.getElementById("list").classList.toggle("hidden", cinemaMode);
+  document.getElementById("searchBarArea").classList.toggle("cinema-hidden", cinemaMode);
+  document.getElementById("cinemaBtn").textContent = cinemaMode ? "⊟ Liste" : "⊞ Cinéma";
 }
 
-function render() {
-    const list = document.getElementById("list");
-    const watched = getWatched();
-    const resume = getResume();
-    const timecodes = getTimecodes();
-    list.innerHTML = "";
+// ─── Search ───────────────────────────────────────────────────────────────────
+function deepSearch() {
+  const val = document.getElementById("searchInput").value.toLowerCase().trim();
+  document.getElementById("clearSearchBtn").style.display = val ? "block" : "none";
+  if (!val) { isSearching = false; render(); return; }
+  isSearching = true;
 
-    if (view !== "creators") {
-        const b = document.createElement("div"); b.className = "item"; b.innerHTML = "⬅ Retour";
-        b.style.background = "#333";
-        b.onclick = () => { if(view==="videos") {view="categories"; category=null;} else {view="creators"; creator=null;} render(); };
-        list.appendChild(b);
-    }
+  const scroll = document.getElementById("sidebarScroll");
+  scroll.innerHTML = `<div class="section-label">Résultats</div>`;
 
-    if (view === "creators") {
-        const last = Object.entries(resume).sort((a,b)=>b[1].time - a[1].time).slice(0,4);
-        if(last.length > 0) {
-            list.innerHTML += `<div style="font-size:10px; opacity:0.4; margin:10px 0 5px 5px; font-weight:bold;">REPRENDRE</div>`;
-            last.forEach(([k, item]) => {
-                const el = document.createElement("div"); el.className = "resume-card";
-                el.innerHTML = `<div class="delete-resume">✕</div><div style="font-weight:bold;">${item.video.title}</div><small style="opacity:0.5;">${item.creatorName} • ${item.categoryName}</small>`;
-                el.onclick = () => { creator=item.creator; category=item.category; view="videos"; loadVideo(item.video, false); if(window.innerWidth < 768) toggleCinema(); };
-                el.querySelector('.delete-resume').onclick = (e) => deleteFromResume(k, e);
-                list.appendChild(el);
-            });
-            list.appendChild(document.createElement("hr"));
+  let count = 0;
+  Object.keys(data).forEach(cK => {
+    Object.keys(data[cK].categories).forEach(catK => {
+      data[cK].categories[catK].videos.forEach(v => {
+        if (v.title.toLowerCase().includes(val) || data[cK].name.toLowerCase().includes(val) || data[cK].categories[catK].title.toLowerCase().includes(val)) {
+          const el = document.createElement("div");
+          el.className = "item";
+          const chapterCount = v.chapters ? v.chapters.length : 0;
+          el.innerHTML = `
+            <div class="item-left">
+              <div class="item-icon">▶</div>
+              <div>
+                <div class="item-title">${v.title}</div>
+                <div class="search-result-sub">${data[cK].name} · ${data[cK].categories[catK].title}${chapterCount > 0 ? ` · ${chapterCount} chapitres` : ''}</div>
+              </div>
+            </div>`;
+          el.onclick = () => {
+            creator = cK; category = catK; view = "videos";
+            clearSearch();
+            loadVideo(v);
+          };
+          scroll.appendChild(el);
+          count++;
         }
-        Object.keys(data).forEach(k => {
-            const el = document.createElement("div"); el.className = "item"; el.innerHTML = `👤 ${data[k].name}`;
-            el.onclick = () => { creator=k; view="categories"; render(); };
-            list.appendChild(el);
-        });
-    } else if (view === "categories") {
-        Object.keys(data[creator].categories).forEach(k => {
-            const el = document.createElement("div"); el.className = "item"; el.innerHTML = `📁 ${data[creator].categories[k].title}`;
-            el.onclick = () => { category=k; view="videos"; render(); };
-            list.appendChild(el);
-        });
-    } else if (view === "videos") {
-        data[creator].categories[category].videos.forEach(v => {
-            const isW = watched.includes(v.id);
-            const el = document.createElement("div"); 
-            el.className = `item ${currentVideo?.id === v.id ? 'active' : ''} ${isW ? 'watched' : ''}`;
-            const displayTime = formatSeconds(timecodes[v.id]);
-            el.innerHTML = `<span>▶ ${v.title}</span>
-                <div style="display:flex; align-items:center; gap:8px;">
-                    <input type="text" class="time-input" placeholder="0:00" value="${displayTime !== '0:00' ? displayTime : ''}" onclick="event.stopPropagation()" onblur="saveTimecode('${v.id}', this.value)">
-                    <div class="status-icon">${isW ? '✓' : '+'}</div>
-                </div>`;
-            el.onclick = () => { loadVideo(v); if(window.innerWidth < 768) toggleCinema(); };
-            el.querySelector('.status-icon').onclick = (e) => toggleWatched(v.id, e);
-            list.appendChild(el);
-        });
-        const rBtn = document.createElement("button"); rBtn.className = "unmark-btn"; rBtn.innerText = "♻ Réinitialiser la série";
-        rBtn.onclick = unmarkAllInCategory; list.appendChild(rBtn);
-    }
+      });
+    });
+  });
+
+  if (count === 0) {
+    scroll.innerHTML += `<div style="color:var(--text-dim); font-size:12px; padding:16px 6px;">Aucun résultat pour "${val}"</div>`;
+  }
+
+  renderBreadcrumb();
 }
 
-document.addEventListener("DOMContentLoaded", () => {
-    document.getElementById("searchBtn").onclick = () => {
-        const inp = document.getElementById("search");
-        inp.style.display = (inp.style.display === "block") ? "none" : "block";
-        if(inp.style.display === "block") inp.focus();
-    };
-    loadDatabase();
+function clearSearch() {
+  document.getElementById("searchInput").value = "";
+  document.getElementById("clearSearchBtn").style.display = "none";
+  isSearching = false;
+  render();
+}
+
+// ─── Breadcrumb ─────────────────────────────────────────────────────────────
+function renderBreadcrumb() {
+  const bc = document.getElementById("breadcrumb");
+  const parts = [];
+
+  parts.push(`<span class="crumb ${view === 'creators' ? 'active' : ''}" onclick="goTo('creators')">Accueil</span>`);
+
+  if (view !== "creators" && creator) {
+    parts.push(`<span class="crumb-sep">›</span>`);
+    parts.push(`<span class="crumb ${view === 'categories' ? 'active' : ''}" onclick="goTo('categories')">${data[creator]?.name || ''}</span>`);
+  }
+
+  if (view === "videos" && category) {
+    parts.push(`<span class="crumb-sep">›</span>`);
+    parts.push(`<span class="crumb active">${data[creator]?.categories[category]?.title || ''}</span>`);
+  }
+
+  if (isSearching) {
+    bc.innerHTML = `<span class="crumb active">Recherche</span>`;
+    return;
+  }
+
+  bc.innerHTML = parts.join('');
+}
+
+function goTo(targetView) {
+  if (targetView === 'creators') { view = "creators"; creator = null; category = null; }
+  else if (targetView === 'categories') { view = "categories"; category = null; }
+  render();
+}
+
+// ─── Render ──────────────────────────────────────────────────────────────────
+function render() {
+  if (isSearching) return;
+
+  renderBreadcrumb();
+
+  const scroll = document.getElementById("sidebarScroll");
+  const watched = getWatched();
+  const resume = getResume();
+  const timecodes = getTimecodes();
+  scroll.innerHTML = "";
+
+  // ── CREATORS VIEW ────────────────────────────────────────────────────────
+  if (view === "creators") {
+    const recents = Object.entries(resume).sort((a, b) => b[1].time - a[1].time).slice(0, 4);
+    if (recents.length > 0) {
+      const resumeLabel = document.createElement("div");
+      resumeLabel.className = "section-label";
+      resumeLabel.textContent = "Reprendre";
+      scroll.appendChild(resumeLabel);
+
+      recents.forEach(([k, item]) => {
+        const el = document.createElement("div");
+        el.className = "resume-card";
+        // Récupérer la catégorie pour avoir l'image
+        const catData = data[item.creator]?.categories[item.category];
+        const resumeIcon = catData ? getCategoryIcon(item.category, catData) : '📁';
+        el.innerHTML = `
+          <div class="resume-thumb" style="overflow:hidden;">${resumeIcon}</div>
+          <div class="resume-info">
+            <div class="resume-title">${item.video.title}</div>
+            <div class="resume-sub">${item.creatorName} · ${item.categoryName}</div>
+          </div>
+          <button class="resume-delete" title="Retirer">✕</button>`;
+        el.onclick = () => { creator = item.creator; category = item.category; view = "videos"; if (currentVideo && currentVideo.id === item.video.id) { render(); } else { loadVideo(item.video, item.chapterIndex || 0); } };
+        el.querySelector('.resume-delete').onclick = (e) => { e.stopPropagation(); deleteFromResume(k, e); };
+        scroll.appendChild(el);
+      });
+      const div = document.createElement("div");
+      div.className = "divider";
+      scroll.appendChild(div);
+    }
+
+    const creatorsLabel = document.createElement("div");
+    creatorsLabel.className = "section-label";
+    creatorsLabel.textContent = "Créateurs";
+    scroll.appendChild(creatorsLabel);
+
+    Object.keys(data).forEach(k => {
+      const el = document.createElement("div");
+      el.className = "item";
+      const catCount = Object.keys(data[k].categories).length;
+      el.innerHTML = `
+        <div class="item-left">
+          <div class="item-icon">👤</div>
+          <div>
+            <div class="item-title">${data[k].name}</div>
+            <div class="search-result-sub">${catCount} série${catCount > 1 ? 's' : ''}</div>
+          </div>
+        </div>
+        <span style="color:var(--text-dim); font-size:12px;">›</span>`;
+      el.onclick = () => { creator = k; view = "categories"; render(); };
+      scroll.appendChild(el);
+    });
+  }
+
+  // ── CATEGORIES VIEW ──────────────────────────────────────────────────────
+  else if (view === "categories") {
+    const backEl = document.createElement("button");
+    backEl.className = "back-btn";
+    backEl.innerHTML = `← Retour`;
+    backEl.onclick = () => { view = "creators"; creator = null; render(); };
+    scroll.appendChild(backEl);
+
+    const label = document.createElement("div");
+    label.className = "section-label";
+    label.textContent = data[creator].name;
+    scroll.appendChild(label);
+
+    const grid = document.createElement("div");
+    grid.className = "cat-grid";
+    Object.keys(data[creator].categories).forEach(k => {
+      const cat = data[creator].categories[k];
+      const total = cat.videos.length;
+      const watchedCount = cat.videos.filter(v => watched.includes(v.id)).length;
+      const card = document.createElement("div");
+      card.className = "cat-card";
+      const iconContent = getCategoryIcon(k, cat);
+      card.innerHTML = `
+        <div class="cat-card-icon">${iconContent}</div>
+        <div class="cat-card-info">
+          <div class="cat-card-title">${cat.title}</div>
+          <div class="cat-card-count">${total} vidéos${watchedCount > 0 ? ` · ${watchedCount} vus` : ''}</div>
+        </div>`;
+      card.onclick = () => { category = k; view = "videos"; render(); };
+      grid.appendChild(card);
+    });
+    scroll.appendChild(grid);
+  }
+
+  // ── VIDEOS VIEW ──────────────────────────────────────────────────────────
+  else if (view === "videos") {
+    const backEl = document.createElement("button");
+    backEl.className = "back-btn";
+    backEl.innerHTML = `← ${data[creator].name}`;
+    backEl.onclick = () => { view = "categories"; category = null; render(); };
+    scroll.appendChild(backEl);
+
+    const label = document.createElement("div");
+    label.className = "section-label";
+    label.textContent = data[creator].categories[category].title;
+    scroll.appendChild(label);
+
+    // Organiser les vidéos par saga si nécessaire
+    const catData = data[creator].categories[category];
+    const videos = data[creator].categories[category].videos;
+
+    if (catData.sagas && catData.sagas.length > 0) {
+      // Mode saga
+      catData.sagas.forEach(saga => {
+        const sagaArcs = (catData.arcs && saga.arcIds) 
+          ? saga.arcIds.map(id => catData.arcs.find(a => a.id === id)).filter(Boolean)
+          : [];
+        
+        let sagaVideos;
+        if (sagaArcs.length > 0) {
+          sagaVideos = videos.filter(v => {
+            if (!v.startEp) return false;
+            return sagaArcs.some(arc => v.startEp <= arc.endEp && v.endEp >= arc.startEp);
+          });
+        } else {
+          sagaVideos = [...videos];
+        }
+        
+        if (sagaVideos.length === 0) return;
+        
+        // Header saga
+        const sagaHeader = document.createElement("div");
+        sagaHeader.className = "saga-header";
+        sagaHeader.innerHTML = `
+          <span class="saga-icon">▶</span>
+          <div class="saga-info">
+            <div class="saga-title">${saga.title}</div>
+            <div class="saga-count">
+              ${sagaVideos.length} vidéo${sagaVideos.length > 1 ? 's' : ''}
+              ${sagaArcs.length > 0 ? ` · ${sagaArcs[0].startEp}-${sagaArcs[sagaArcs.length - 1].endEp}` : ''}
+            </div>
+          </div>
+        `;
+        
+        const sagaContent = document.createElement("div");
+        sagaContent.className = "saga-content";
+        
+        // Ouvrir automatiquement si la vidéo en cours est dans cette saga
+        // Restaurer l'état sauvegardé ou ouvrir si vidéo en cours
+        const sagaKey = creator + "__" + category + "__" + saga.title;
+        // Vérifier si la vidéo en cours ou une vidéo du "Reprendre" est dans cette saga
+        const resumeData = getResume();
+        const isCurrentCategory = currentVideo && currentCreator === creator && currentCategory === category;
+
+        const hasResumeVideo = sagaVideos.some(v => 
+          Object.values(resumeData).some(r => r.video && r.video.id === v.id)
+        );
+
+        // Ouvrir si : déjà ouverte manuellement, ou vidéo en cours dans cette saga, ou vidéo en reprise dans cette saga
+        const shouldOpen = openSagas[sagaKey] === true 
+          || (isCurrentCategory && sagaVideos.some(v => v.id === currentVideo.id))
+          || (!isCurrentCategory && hasResumeVideo);
+
+        if (shouldOpen) {
+          sagaHeader.classList.add("open");
+          sagaContent.classList.add("open");
+          openSagas[sagaKey] = true;
+        }
+
+        sagaHeader.onclick = () => {
+          const isOpen = sagaContent.classList.contains("open");
+          sagaContent.classList.toggle("open", !isOpen);
+          sagaHeader.classList.toggle("open", !isOpen);
+          // Sauvegarder l'état
+          const sagaKey = creator + "__" + category + "__" + saga.title;
+          openSagas[sagaKey] = !isOpen;
+        };
+        
+        // Ajouter les vidéos avec leurs en-têtes d'arc
+        if (sagaArcs.length > 0) {
+          let lastArcId = null;
+          sagaVideos.forEach(v => {
+            const arc = getArcForEpisode(sagaArcs, v.startEp);
+            if (arc && arc.id !== lastArcId) {
+              const arcHeader = createArcHeaderFromData(arc, catData);
+              sagaContent.appendChild(arcHeader);
+              lastArcId = arc.id;
+            }
+            const el = createVideoElement(v, catData);
+            el.classList.add("saga-indented");
+            sagaContent.appendChild(el);
+          });
+        } else {
+          sagaVideos.forEach(v => {
+            const el = createVideoElement(v, catData);
+            el.classList.add("saga-indented");
+            sagaContent.appendChild(el);
+          });
+        }
+        
+        scroll.appendChild(sagaHeader);
+        scroll.appendChild(sagaContent);
+      });
+      
+      // Vidéos hors saga (sans startEp ou non attribuées)
+      const sagaVideoIds = new Set();
+      catData.sagas.forEach(saga => {
+        const sagaArcs = (catData.arcs && saga.arcIds) 
+          ? saga.arcIds.map(id => catData.arcs.find(a => a.id === id)).filter(Boolean)
+          : [];
+        let sv;
+        if (sagaArcs.length > 0) {
+          sv = videos.filter(v => v.startEp && sagaArcs.some(arc => v.startEp <= arc.endEp && v.endEp >= arc.startEp));
+        } else {
+          sv = [...videos];
+        }
+        sv.forEach(v => sagaVideoIds.add(v.id));
+      });
+      
+      const remainingVideos = videos.filter(v => !sagaVideoIds.has(v.id));
+      if (remainingVideos.length > 0) {
+        const separator = document.createElement("div");
+        separator.className = "section-label";
+        separator.textContent = "Hors saga";
+        separator.style.marginTop = "16px";
+        scroll.appendChild(separator);
+        remainingVideos.forEach(v => scroll.appendChild(createVideoElement(v, catData)));
+      }
+      
+    } else if (catData.arcs && catData.arcs.length > 0) {
+      // Mode arcs sans saga
+      let lastArcId = null;
+      videos.forEach(v => {
+        const arc = v.startEp ? getArcForEpisode(catData.arcs, v.startEp) : null;
+        if (arc && arc.id !== lastArcId) {
+          const arcHeader = createArcHeaderFromData(arc, catData);
+          scroll.appendChild(arcHeader);
+          lastArcId = arc.id;
+        }
+        scroll.appendChild(createVideoElement(v, catData));
+      });
+    } else {
+      // Mode normal
+      videos.forEach(v => scroll.appendChild(createVideoElement(v, catData)));
+    }
+
+    // Insérer les en-têtes d'arcs APRÈS avoir créé tous les éléments
+    const catForArcs = data[creator].categories[category];
+    try {
+      const catForArcs = data[creator]?.categories?.[category];
+    } catch(e) {
+      console.warn("Erreur arcs:", e);
+    }
+
+    setTimeout(() => {
+      if (skipAutoScroll) {
+        skipAutoScroll = false;
+        return;
+      }
+      
+      const sidebar = document.getElementById("sidebarScroll");
+      let targetEl = scroll.querySelector('.item.active');
+      
+      // Si pas de vidéo active, chercher une vidéo en reprise dans cette catégorie
+      if (!targetEl) {
+        const resumeData = getResume();
+        const resumeKey = creator + "__" + category;
+        const categoryResume = resumeData[resumeKey];
+        if (categoryResume && categoryResume.video) {
+          targetEl = scroll.querySelector(`[data-video-id="${categoryResume.video.id}"]`);
+        }
+      }
+      
+      if (targetEl) {
+        const elementTop = targetEl.offsetTop;
+        const targetPosition = elementTop - sidebar.clientHeight * 0.25;
+        sidebar.scrollTop = Math.max(0, targetPosition);
+      }
+    }, 50);
+
+    const resetBtn = document.createElement("button");
+    resetBtn.className = "reset-btn";
+    resetBtn.textContent = "♻ Réinitialiser la série";
+    resetBtn.onclick = unmarkAllInCategory;
+    scroll.appendChild(resetBtn);
+  }
+}
+
+// ─── Init ─────────────────────────────────────────────────────────────────────
+// ─── Mode Développeur ────────────────────────────────────────────────────────
+let devMode = false;
+let devChapters = {}; // Structure: { "videoId": [ { title, start } ] }
+
+// Charger les chapitres dev depuis localStorage
+function loadDevChapters() {
+  const saved = localStorage.getItem("sv_dev_chapters");
+  if (saved) {
+    devChapters = JSON.parse(saved);
+  }
+}
+
+function saveDevChapters() {
+  localStorage.setItem("sv_dev_chapters", JSON.stringify(devChapters));
+}
+
+function toggleDevMode() {
+  devMode = !devMode;
+  
+  const badge = document.getElementById("devBadge");
+  const panel = document.getElementById("devPanel");
+  
+  badge.classList.toggle("active", devMode);
+  
+  if (!devMode) {
+    panel.classList.remove("active");
+  }
+  
+  if (devMode) {
+    openDevPanel();
+  }
+  
+  console.log(devMode ? "🛠 Mode développeur activé" : "🛠 Mode développeur désactivé");
+}
+
+function openDevPanel() {
+  const panel = document.getElementById("devPanel");
+  panel.classList.add("active");
+  
+  const grabBtn = document.getElementById("devTimeInput").nextElementSibling;
+  const addBtn = document.querySelector('.btn-dev-add');
+  const timeInput = document.getElementById("devTimeInput");
+  const titleInput = document.getElementById("devTitleInput");
+  const chapterList = document.getElementById("devChapterList");
+  const clearBtn = document.querySelector('.dev-actions .btn-dev-close');
+  
+  if (currentVideo) {
+    timeInput.disabled = false;
+    timeInput.placeholder = "00:00";
+    titleInput.disabled = false;
+    titleInput.placeholder = "Nom du chapitre (ex: Épisode 4)";
+    if (grabBtn) grabBtn.disabled = false;
+    if (grabBtn) grabBtn.style.opacity = "1";
+    if (addBtn) addBtn.disabled = false;
+    if (addBtn) addBtn.style.opacity = "1";
+    if (clearBtn) clearBtn.disabled = false;
+    if (clearBtn) clearBtn.style.opacity = "1";
+    chapterList.style.opacity = "1";
+    renderDevChapters();
+  } else {
+    timeInput.disabled = true;
+    timeInput.placeholder = "Aucune vidéo";
+    titleInput.disabled = true;
+    titleInput.placeholder = "Lance une vidéo d'abord";
+    if (grabBtn) grabBtn.disabled = true;
+    if (grabBtn) grabBtn.style.opacity = "0.4";
+    if (addBtn) addBtn.disabled = true;
+    if (addBtn) addBtn.style.opacity = "0.4";
+    if (clearBtn) clearBtn.disabled = true;
+    if (clearBtn) clearBtn.style.opacity = "0.4";
+    chapterList.innerHTML = `<div style="color:var(--text-dim); font-size:11px; padding:12px; text-align:center;">Lance une vidéo pour gérer les chapitres</div>`;
+    chapterList.style.opacity = "0.5";
+  }
+}
+
+function closeDevPanel() {
+  devMode = false;
+  const panel = document.getElementById("devPanel");
+  const badge = document.getElementById("devBadge");
+  panel.classList.remove("active");
+  badge.classList.remove("active");
+}
+
+function grabCurrentTime() {
+  if (!player || !currentVideo) return;
+  
+  const timecodes = getTimecodes();
+  const currentTime = timecodes[currentVideo.id] || 0;
+  const formatted = formatSeconds(Math.floor(currentTime));
+  
+  document.getElementById("devTimeInput").value = formatted || "0:00";
+}
+
+function addChapter() {
+  if (!currentVideo) return;
+  
+  const timeInput = document.getElementById("devTimeInput").value.trim();
+  const titleInput = document.getElementById("devTitleInput").value.trim();
+  
+  if (!titleInput) {
+    alert("Veuillez entrer un nom de chapitre");
+    return;
+  }
+  
+  const seconds = timeInput ? parseTimeToSeconds(timeInput) : 0;
+  
+  if (!devChapters[currentVideo.id]) {
+    devChapters[currentVideo.id] = [];
+  }
+  
+  // Vérifier si un chapitre existe déjà à ce timecode (local ou data.json)
+  const localExists = (devChapters[currentVideo.id] || []).some(ch => ch.start === seconds);
+  const dataExists = (currentVideo.chapters || []).some(ch => ch.start === seconds);
+  if (localExists || dataExists) {
+    alert("Un chapitre existe déjà à ce timecode");
+    return;
+  }
+  
+  devChapters[currentVideo.id].push({
+    title: titleInput,
+    start: seconds
+  });
+  
+  // Trier par timecode
+  devChapters[currentVideo.id].sort((a, b) => a.start - b.start);
+  
+  saveDevChapters();
+  renderDevChapters();
+  
+  // Vider les champs
+  document.getElementById("devTitleInput").value = "";
+  
+  console.log(`✅ Chapitre ajouté: "${titleInput}" à ${formatSeconds(seconds)}`);
+}
+
+function deleteDevChapterFull(videoId, start, source) {
+  if (source === 'local') {
+    // Supprimer du localStorage
+    if (!devChapters[videoId]) return;
+    devChapters[videoId] = devChapters[videoId].filter(ch => ch.start !== start);
+    if (devChapters[videoId].length === 0) {
+      delete devChapters[videoId];
+    }
+    saveDevChapters();
+  } else if (source === 'data') {
+    // Supprimer du data.json original (dans la copie en mémoire)
+    if (!currentVideo || !currentVideo.chapters) return;
+    currentVideo.chapters = currentVideo.chapters.filter(ch => ch.start !== start);
+    if (currentVideo.chapters.length === 0) {
+      delete currentVideo.chapters;
+    }
+  }
+  renderDevChapters();
+  // Mettre à jour les chapitres dans la vidéo en cours
+  if (player) {
+    const chapters = getChapters(currentVideo);
+    const timecodes = getTimecodes();
+    const currentTime = timecodes[currentVideo.id] || 0;
+    const currentIdx = findCurrentChapterIndex(currentTime, chapters);
+    updateChapterDisplay(chapters[currentIdx] || chapters[0], chapters);
+  }
+}
+
+function renderDevChapters() {
+  if (!currentVideo) return;
+  
+  const list = document.getElementById("devChapterList");
+  const videoId = currentVideo.id;
+  
+  // Récupérer les chapitres du data.json original
+  const originalChapters = currentVideo.chapters || [];
+  
+  // Récupérer les chapitres dev locaux
+  const localChapters = devChapters[videoId] || [];
+  
+  // Fusionner et marquer la source
+  const allChapters = [
+    ...originalChapters.map(ch => ({ ...ch, source: 'data' })),
+    ...localChapters.map(ch => ({ ...ch, source: 'local' }))
+  ].sort((a, b) => (a.start || 0) - (b.start || 0));
+  
+  // Supprimer les doublons (même timecode)
+  const uniqueChapters = [];
+  const seenStarts = new Set();
+  allChapters.forEach(ch => {
+    if (!seenStarts.has(ch.start)) {
+      seenStarts.add(ch.start);
+      uniqueChapters.push(ch);
+    }
+  });
+  
+  if (uniqueChapters.length === 0) {
+    list.innerHTML = `<div style="color:var(--text-dim); font-size:11px; padding:12px; text-align:center;">Aucun chapitre</div>`;
+    return;
+  }
+  
+  list.innerHTML = uniqueChapters.map((ch, i) => `
+    <div class="dev-chapter-item" style="${ch.source === 'local' ? 'border-left: 2px solid #ff8800;' : ''}">
+      <span style="color:${ch.source === 'local' ? '#ff8800' : 'var(--text-dim)'}; font-weight:600; flex-shrink:0;">#${i + 1}</span>
+      <span class="dev-chapter-time">${formatSeconds(ch.start)}</span>
+      <span class="dev-chapter-name">${ch.title}</span>
+      ${ch.source === 'local' ? '<span style="font-size:8px;color:#ff8800;flex-shrink:0;">LOCAL</span>' : ''}
+      <button class="dev-chapter-delete" onclick="deleteDevChapterFull('${videoId}', ${ch.start}, '${ch.source}')" title="Supprimer">✕</button>
+    </div>
+  `).join('');
+}
+
+function clearDevChapters() {
+  if (!currentVideo) return;
+  if (!confirm("Supprimer TOUS les chapitres (data.json ET locaux) de cette vidéo ?")) return;
+  
+  // Supprimer du data.json en mémoire
+  if (currentVideo.chapters) {
+    delete currentVideo.chapters;
+  }
+  
+  // Supprimer du localStorage
+  delete devChapters[currentVideo.id];
+  saveDevChapters();
+  
+  renderDevChapters();
+  
+  // Mettre à jour l'affichage
+  if (player) {
+    const chapters = getChapters(currentVideo);
+    updateChapterDisplay(chapters[0], chapters);
+  }
+  
+  console.log("🗑 Tous les chapitres supprimés pour cette vidéo");
+}
+
+function exportDataJson() {
+  if (!confirm("Cela va générer un fichier data.json complet avec vos chapitres. Continuer ?")) return;
+  
+  // Créer une copie profonde des données
+  const exportData = JSON.parse(JSON.stringify(data));
+  
+  // Fusionner les chapitres dev dans les données
+  Object.keys(devChapters).forEach(videoId => {
+    Object.keys(exportData).forEach(creatorKey => {
+      Object.keys(exportData[creatorKey].categories).forEach(catKey => {
+        exportData[creatorKey].categories[catKey].videos.forEach((video, idx) => {
+          if (video.id === videoId) {
+            const existingChapters = video.chapters || [];
+            const localChapters = devChapters[videoId] || [];
+            
+            // Fusionner en évitant les doublons (même start)
+            const merged = [...existingChapters];
+            localChapters.forEach(localCh => {
+              const exists = merged.some(ch => ch.start === localCh.start);
+              if (!exists) {
+                merged.push(localCh);
+              }
+            });
+            
+            merged.sort((a, b) => (a.start || 0) - (b.start || 0));
+            
+            if (merged.length > 0) {
+              exportData[creatorKey].categories[catKey].videos[idx].chapters = merged;
+            }
+          }
+        });
+      });
+    });
+  });
+  
+  // Formater le JSON
+  const minify = confirm("Minifier le fichier ? (OK = compact, Annuler = formaté)");
+  let jsonStr = JSON.stringify(exportData, null, 2);
+  
+  if (minify) {
+    // Sagas et arcs sur une ligne
+    jsonStr = jsonStr.replace(/"arcIds": \[\s*\n((?:\s*"[^"]*",?\s*\n)*)\s*\]/g, (m, c) => '"arcIds": [' + (c.match(/"[^"]*"/g) || []).join(', ') + ' ]');
+    jsonStr = jsonStr.replace(/\{\s*\n\s*"title": ("[^"]*"),\s*\n\s*("arcIds": \[[^\]]*\])\s*\n\s*\}/g, '{ "title": $1, $2 }');
+    
+    // Vidéos avec chapitres : propriétés sur une ligne, chapters indenté
+    jsonStr = jsonStr.replace(
+      /(\s*)\{\s*\n\1\s*"id": ("[^"]*"),\s*\n\1\s*"title": ("[^"]*"),\s*\n\1\s*"startEp": (\d+),\s*\n\1\s*"endEp": (\d+),\s*\n\1\s*"chapters":/g,
+      '$1{ "id": $2, "title": $3, "startEp": $4, "endEp": $5, "chapters":'
+    );
+    
+    // Ta version pour le reste
+    jsonStr = jsonStr.replace(
+      /(\s*)(\{(?:\s*"[^"]+":\s*(?:"[^"]*"|\d+|true|false|null),\s*)*\s*"[^"]+":\s*(?:"[^"]*"|\d+|true|false|null)\s*\})/g,
+      (match, spaces, obj) => {
+        return spaces + obj.replace(/\n\s*/g, ' ').replace(/,\s*/g, ', ').replace(/\s+/g, ' ').trim();
+      }
+    );
+    
+    jsonStr = jsonStr.replace(/\n\s*\n/g, '\n');
+  }
+  
+  // Générer le fichier
+  const blob = new Blob([jsonStr], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'data.json';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  
+  // Nettoyer les chapitres dev après export
+  if (confirm("Export réussi ! Voulez-vous effacer les chapitres locaux ?")) {
+    devChapters = {};
+    saveDevChapters();
+    if (currentVideo) renderDevChapters();
+  }
+  
+  console.log("📥 data.json exporté avec succès !");
+}
+
+// Raccourci clavier Ctrl+Shift+D pour activer le mode dev
+document.addEventListener('keydown', (e) => {
+  if (e.ctrlKey && e.shiftKey && e.key === 'D') {
+    e.preventDefault();
+    toggleDevMode();
+  }
 });
+// ─── Sagas & Arcs ────────────────────────────────────────────────────────────
+function getArcForEpisode(arcs, episodeNum) {
+  if (!arcs || !episodeNum) return null;
+  for (const arc of arcs) {
+    if (episodeNum >= arc.startEp && episodeNum <= arc.endEp) {
+      return arc;
+    }
+  }
+  return null;
+}
+
+function hasSagas(cat) {
+  return cat && cat.sagas && cat.sagas.length > 0;
+}
+
+function hasArcs(cat) {
+  return cat && cat.arcs && cat.arcs.length > 0;
+}
+
+function buildSagaAndArcHeaders(container, cat) {
+  if (!cat) return;
+  
+  const hasSagaStructure = cat.sagas && cat.sagas.length > 0;
+  const hasArcStructure = cat.arcs && cat.arcs.length > 0;
+  
+  console.log("buildSagaAndArcHeaders:", "sagas:", hasSagaStructure, "arcs:", hasArcStructure);
+  
+  // Ni saga ni arc → rien à faire
+  if (!hasSagaStructure && !hasArcStructure) {
+    console.log("→ Rien à afficher");
+    return;
+  }
+  
+  // Arcs sans saga
+  if (!hasSagaStructure && hasArcStructure) {
+    console.log("→ Affichage arcs seuls");
+    insertArcHeadersOnly(container, cat);
+    return;
+  }
+  
+  // Sagas (avec ou sans arcs)
+  if (hasSagaStructure) {
+    console.log("→ Affichage sagas, nombre:", cat.sagas.length);
+    cat.sagas.forEach((saga) => {
+      const sagaArcs = hasArcStructure && saga.arcIds 
+        ? saga.arcIds.map(id => cat.arcs.find(a => a.id === id)).filter(Boolean)
+        : [];
+      
+      // Trouver les vidéos de cette saga
+      let sagaVideos;
+      if (sagaArcs.length > 0) {
+        // Vidéos qui appartiennent à ces arcs
+        sagaVideos = cat.videos.filter(v => {
+          if (!v.startEp) return false;
+          return sagaArcs.some(arc => 
+            v.startEp <= arc.endEp && v.endEp >= arc.startEp
+          );
+        });
+      } else {
+        // Pas d'arcs : prendre toutes les vidéos (saison simple)
+        sagaVideos = [...cat.videos];
+      }
+
+      console.log("Saga:", saga.title, "Arcs saga:", sagaArcs.length, "Vidéos trouvées:", sagaVideos.length);
+
+      if (sagaVideos.length === 0) {
+        console.log("→ Aucune vidéo, saga ignorée");
+        return;
+      }
+      
+      // Créer le header de saga
+      const sagaHeader = document.createElement("div");
+      sagaHeader.className = "saga-header";
+      sagaHeader.innerHTML = `
+        <span class="saga-icon">▶</span>
+        <div class="saga-info">
+          <div class="saga-title">${saga.title}</div>
+          <div class="saga-count">
+            ${sagaVideos.length} vidéo${sagaVideos.length > 1 ? 's' : ''}
+            ${sagaArcs.length > 0 ? ` · ${sagaArcs[0].startEp}-${sagaArcs[sagaArcs.length - 1].endEp}` : ''}
+          </div>
+        </div>
+      `;
+      
+      // Créer le conteneur de saga
+      const sagaContent = document.createElement("div");
+      sagaContent.className = "saga-content";
+      
+      // Ajouter les en-têtes d'arcs si présents
+      if (sagaArcs.length > 0) {
+        let lastArcId = null;
+        sagaVideos.forEach((video) => {
+          const arc = getArcForEpisode(sagaArcs, video.startEp);
+          if (arc && arc.id !== lastArcId) {
+            const arcHeader = createArcHeaderFromData(arc, cat);
+            sagaContent.appendChild(arcHeader);
+            lastArcId = arc.id;
+          }
+          
+          const itemEl = container.querySelector(`[data-video-id="${video.id}"]`);
+          if (itemEl) {
+            itemEl.classList.add("saga-indented");
+            sagaContent.appendChild(itemEl);
+          }
+        });
+      } else {
+        // Juste les vidéos indentées
+        let sagaFound = 0;
+        sagaVideos.forEach((video) => {
+          const itemEl = container.querySelector(`[data-video-id="${video.id}"]`);
+          if (itemEl) {
+            itemEl.classList.add("saga-indented");
+            sagaContent.appendChild(itemEl);
+            sagaFound++;
+          } else {
+            console.log("  Saga vidéo non trouvée:", video.id, video.title);
+          }
+        });
+        console.log("  Saga", saga.title, ":", sagaFound, "/", sagaVideos.length, "vidéos trouvées");
+      }
+      
+      // Toggle
+      sagaHeader.onclick = () => {
+        const isOpen = sagaContent.classList.contains("open");
+        sagaContent.classList.toggle("open", !isOpen);
+        sagaHeader.classList.toggle("open", !isOpen);
+        // Sauvegarder l'état
+        const sagaKey = creator + "__" + category + "__" + saga.title;
+        openSagas[sagaKey] = !isOpen;
+      };
+      
+      console.log("  Première vidéo saga:", sagaVideos[0].id, sagaVideos[0].title);
+      console.log("  Container:", container);
+      console.log("  Premier enfant du container:", container.children[0]);
+      console.log("  Premier enfant outerHTML:", container.children[0]?.outerHTML?.substring(0, 200));
+      console.log("  Attribut du premier enfant:", container.children[0]?.getAttribute('data-video-id'));
+      console.log("  Nombre d'enfants avec data-video-id:", container.querySelectorAll('[data-video-id]').length);
+      console.log("  querySelector zyt387:", container.querySelector('[data-video-id="zyt387"]'));
+
+      // Chercher parmi tous les enfants du container
+      const allItems = container.querySelectorAll('.item');
+      const sagaVideoElements = [];
+      sagaVideos.forEach(v => {
+        // Chercher par data-video-id
+        let el = container.querySelector(`[data-video-id="${v.id}"]`);
+        // Fallback : chercher par le titre dans .item-title
+        if (!el) {
+          allItems.forEach(item => {
+            const titleEl = item.querySelector('.item-title');
+            if (titleEl && titleEl.textContent.trim() === v.title) {
+              el = item;
+            }
+          });
+        }
+        if (el) sagaVideoElements.push(el);
+      });
+
+      console.log("  Insertion saga:", saga.title, "éléments trouvés:", sagaVideoElements.length, "/", sagaVideos.length);
+
+      if (sagaVideoElements.length > 0) {
+        const firstInDOM = sagaVideoElements[0];
+        // Insérer le header et le contenu avant la première vidéo de la saga
+        firstInDOM.parentNode.insertBefore(sagaContent, firstInDOM);
+        firstInDOM.parentNode.insertBefore(sagaHeader, sagaContent);
+      } else {
+        console.log("  → Aucun élément trouvé dans le DOM, ajout à la fin");
+        container.appendChild(sagaHeader);
+        container.appendChild(sagaContent);
+      }
+    });
+    
+    // Supprimer les vidéos qui sont dans des sagas de la liste principale
+    // (elles ont été déplacées dans les saga-content)
+  }
+}
+
+function insertArcHeadersOnly(container, cat) {
+  let lastArcId = null;
+  let foundCount = 0;
+  cat.videos.forEach((video) => {
+    const itemElement = container.querySelector(`[data-video-id="${video.id}"]`);
+    if (!itemElement) {
+      console.log("  Vidéo non trouvée:", video.id, video.title);
+      return;
+    }
+    foundCount++;
+    
+    const currentArc = video.startEp ? getArcForEpisode(cat.arcs, video.startEp) : null;
+    
+    if (currentArc && currentArc.id !== lastArcId) {
+      const header = createArcHeaderFromData(currentArc, cat);
+      itemElement.parentNode.insertBefore(header, itemElement);
+      lastArcId = currentArc.id;
+    }
+  });
+  console.log("insertArcHeadersOnly:", foundCount, "vidéos trouvées");
+}
+
+function createArcHeaderFromData(arc, cat) {
+  const header = document.createElement("div");
+  header.className = "arc-header";
+  
+  const arcVideos = cat.videos.filter(v => {
+    if (!v.startEp) return false;
+    return v.startEp <= arc.endEp && v.endEp >= arc.startEp;
+  });
+  
+  const nextArcInfo = getNextArcInfoFromData(arc, cat);
+  
+  header.innerHTML = `
+    <span style="background:${arc.color};width:8px;height:8px;border-radius:50%;flex-shrink:0;box-shadow:0 0 8px ${arc.color}44;"></span>
+    <span class="arc-header-title" style="border-color:${arc.color}33;color:${arc.color};">${arc.title}${nextArcInfo}</span>
+    <span class="arc-header-count">${arcVideos.length} vidéo${arcVideos.length > 1 ? 's' : ''}</span>
+    <span class="arc-header-line"></span>
+  `;
+  
+  return header;
+}
+
+function createVideoElement(v, catData) {
+  const watched = getWatched();
+  const timecodes = getTimecodes();
+  const isW = watched.includes(v.id);
+  const isCurrent = currentVideo?.id === v.id;
+  const tc = timecodes[v.id];
+  const displayTime = formatSeconds(tc);
+  const resumeData = getResume();
+  const isInResume = Object.values(resumeData).some(r => r.video && r.video.id === v.id);
+  const chapterCount = v.chapters ? v.chapters.length : 0;
+  
+  const el = document.createElement("div");
+  el.className = `item ${isCurrent ? 'active' : ''} ${isW ? 'watched' : ''} ${isInResume && !isCurrent ? 'resume-marked' : ''}`;
+  el.setAttribute('data-video-id', v.id);
+  
+  const arcColors = [];
+  if (catData && catData.arcs && v.startEp && v.endEp) {
+    catData.arcs.forEach(arc => {
+      if (v.startEp <= arc.endEp && v.endEp >= arc.startEp) {
+        arcColors.push(arc);
+      }
+    });
+  }
+  
+  const nextArcDot = arcColors.length > 1 ? 
+    `<span style="display:inline-flex;align-items:center;gap:3px;margin-left:5px;font-size:9px;color:${arcColors[1].color};opacity:0.7;vertical-align:middle;" title="${arcColors[1].title} (débute à l'épisode ${arcColors[1].startEp})"><span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:${arcColors[1].color};box-shadow:0 0 5px ${arcColors[1].color}66;"></span>ép.${arcColors[1].startEp}</span>` : '';
+  
+  el.innerHTML = `
+    <div class="item-left">
+      <div class="item-icon">${isCurrent ? '▶' : isW ? '✓' : '·'}</div>
+      <div>
+        <div class="item-title">${v.title}${nextArcDot}</div>
+        ${chapterCount > 0 ? `<div class="search-result-sub">${chapterCount} chapitres</div>` : ''}
+      </div>
+    </div>
+    <div class="item-right">
+      <input type="text" class="time-input" placeholder="${isW ? '✓' : '—'}"
+        value="${isW ? '' : displayTime}"
+        onclick="event.stopPropagation()"
+        onblur="saveTimecode('${v.id}', this.value)"
+        ${isW ? 'disabled' : ''}
+        style="${isW ? 'opacity:0.4;pointer-events:none;' : ''}">
+      <div class="status-icon" title="${isW ? 'Marquer non vu' : 'Marquer vu'}">${isW ? '✓' : '+'}</div>
+    </div>`;
+  
+  el.onclick = () => loadVideo(v);
+  el.querySelector('.status-icon').onclick = (e) => toggleWatched(v.id, e);
+  
+  return el;
+}
+
+function getNextArcInfoFromData(arc, cat) {
+  return '';
+}
+
+function getSagaVideos(videos, sagaArcs, globalArcs) {
+  if (sagaArcs.length > 0) {
+    // Filtrer les vidéos qui appartiennent aux arcs de cette saga
+    const arcIds = sagaArcs.map(a => a.id);
+    return videos.filter(v => {
+      if (!v.startEp) return false;
+      const arc = getArcForEpisode(sagaArcs, v.startEp);
+      return arc && arcIds.includes(arc.id);
+    });
+  } else if (globalArcs && globalArcs.length > 0) {
+    // Saga sans arcs propres mais avec des arcs globaux ? Cas rare
+    return videos;
+  } else {
+    // Saga sans arcs : prendre toutes les vidéos (pour les saisons)
+    return videos;
+  }
+}
+
+function createArcHeader(arc, cat) {
+  const header = document.createElement("div");
+  header.className = "arc-header";
+  
+  const arcVideos = cat.videos.filter(v => {
+    if (!v.startEp) return false;
+    const vArc = getArcForEpisode(cat.arcs || [], v.startEp);
+    // Si on est dans une saga, utiliser les arcs de la saga
+    return vArc && vArc.id === arc.id;
+  });
+  
+  const nextArcInfo = getNextArcInfo(arc, cat);
+  
+  header.innerHTML = `
+    <span style="background:${arc.color};width:8px;height:8px;border-radius:50%;flex-shrink:0;box-shadow:0 0 8px ${arc.color}44;"></span>
+    <span class="arc-header-title" style="border-color:${arc.color}33;color:${arc.color};">${arc.title}${nextArcInfo}</span>
+    <span class="arc-header-count">${arcVideos.length} vidéo${arcVideos.length > 1 ? 's' : ''}</span>
+    <span class="arc-header-line"></span>
+  `;
+  
+  return header;
+}
+
+function getNextArcInfo(arc, cat) {
+  // Chercher dans les sagas ou les arcs globaux
+  const allArcs = cat.arcs || [];
+  const currentIdx = allArcs.findIndex(a => a.id === arc.id);
+  if (currentIdx === -1 || currentIdx >= allArcs.length - 1) return '';
+  
+  const nextArc = allArcs[currentIdx + 1];
+  const arcVideos = cat.videos.filter(v => {
+    if (!v.startEp) return false;
+    const vArc = getArcForEpisode(allArcs, v.startEp);
+    return vArc && vArc.id === arc.id;
+  });
+  const lastVideo = arcVideos[arcVideos.length - 1];
+  
+  if (lastVideo && lastVideo.endEp && lastVideo.endEp >= nextArc.startEp) {
+    return `<span style="font-size:9px;color:${nextArc.color};margin-left:4px;opacity:0.7;font-weight:400;">→ ${nextArc.title}</span>`;
+  }
+  return '';
+}
+// ─── Export/Import progression ───────────────────────────────────────────────
+function copyProgress() {
+  const progress = {
+    resume: getResume(),
+    watched: getWatched(),
+    timecodes: getTimecodes()
+  };
+  
+  const jsonStr = JSON.stringify(progress);
+  navigator.clipboard.writeText(jsonStr).then(() => {
+    alert("✅ Progression copiée dans le presse-papier !");
+  }).catch(() => {
+    // Fallback si le presse-papier ne fonctionne pas
+    const textarea = document.createElement('textarea');
+    textarea.value = jsonStr;
+    document.body.appendChild(textarea);
+    textarea.select();
+    document.execCommand('copy');
+    document.body.removeChild(textarea);
+    alert("✅ Progression copiée !");
+  });
+}
+
+function importProgress() {
+  const input = prompt("Colle ici ta progression sauvegardée :");
+  if (!input) return;
+  
+  try {
+    const progress = JSON.parse(input);
+    
+    if (!progress.resume && !progress.watched && !progress.timecodes) {
+      throw new Error("Format invalide");
+    }
+    
+    if (confirm("⚠ Cela va remplacer toute ta progression actuelle (repises, vus, timecodes). Continuer ?")) {
+      if (progress.resume) localStorage.setItem(RESUME_KEY, JSON.stringify(progress.resume));
+      if (progress.watched) localStorage.setItem(WATCHED_KEY, JSON.stringify(progress.watched));
+      if (progress.timecodes) localStorage.setItem(TIMECODE_KEY, JSON.stringify(progress.timecodes));
+      alert("✅ Progression importée avec succès ! La page va se recharger.");
+      location.reload();
+    }
+  } catch(e) {
+    alert("❌ Format invalide. Vérifie que tu as bien copié toute la donnée.");
+  }
+}
+// Charger les chapitres dev au démarrage
+loadDevChapters();
+document.addEventListener("DOMContentLoaded", loadDatabase);
 </script>
 </body>
 </html>
