@@ -6,34 +6,189 @@
         "title": "Hunter X Hunter",
         "image": "https://myanimelist.net/images/anime/1337/99013.jpg",
         "videos": [
-          { "id": "ff4xt7", "title": "HXH 1-14", "startEp": 1, "endEp": 14 },
-          { "id": "qj7ins", "title": "HXH 15-21", "startEp": 15, "endEp": 21 },
-          { "id": "eiufho", "title": "HXH 22-35", "startEp": 22, "endEp": 35 },
-          { "id": "x4gc2f", "title": "HXH 36-42", "startEp": 36, "endEp": 42 },
-          { "id": "vly5md", "title": "HXH 43-50", "startEp": 43, "endEp": 50 },
-          { "id": "ua7wjr", "title": "HXH 51-63", "startEp": 51, "endEp": 63 },
-          { "id": "6haxng", "title": "HXH 64-75", "startEp": 64, "endEp": 75 },
-          { "id": "ba6zw5", "title": "HXH 76-85", "startEp": 76, "endEp": 85 },
-          { "id": "c6i3fw", "title": "HXH 86-97", "startEp": 86, "endEp": 97 },
-          { "id": "gyltjz", "title": "HXH 98-104", "startEp": 98, "endEp": 104 },
-          { "id": "o3t9zb", "title": "HXH 105-119", "startEp": 105, "endEp": 119 },
-          { "id": "98fqrs", "title": "HXH 143-148", "startEp": 143, "endEp": 148 }
+          { "id": "ff4xt7", "title": "HXH 1-14", "startEp": 1, "endEp": 14, "chapters": [
+              { "title": "Début", "start": 376 },
+              { "title": "Episode 1 - OPENING", "start": 774 },
+              { "title": "Episode 1", "start": 861 },
+              { "title": "FIN", "start": 17744 }
+            ]
+          },
+          { "id": "qj7ins", "title": "HXH 15-21", "startEp": 15, "endEp": 21, "chapters": [
+              { "title": "Début", "start": 366 },
+              { "title": "JEUX - POKEMON", "start": 764 },
+              { "title": "Episode 15 - OPENING", "start": 11386 },
+              { "title": "Episode 15", "start": 11495 },
+              { "title": "FIN", "start": 19739 }
+            ]
+          },
+          { "id": "eiufho", "title": "HXH 22-35", "startEp": 22, "endEp": 35, "chapters": [
+              { "title": "Début", "start": 367 },
+              { "title": "Episode 22 - PRE-OPENING", "start": 1231 },
+              { "title": "Episode 22 - OPENING", "start": 1248 },
+              { "title": "Episode 22", "start": 1324 },
+              { "title": "FIN", "start": 20560 }
+            ]
+          },
+          { "id": "x4gc2f", "title": "HXH 36-42", "startEp": 36, "endEp": 42, "chapters": [
+              { "title": "Début", "start": 378 },
+              { "title": "JEUX - POKEMON", "start": 1126 },
+              { "title": "Episode 36 - OPENING", "start": 10966 },
+              { "title": "Episode 36", "start": 11092 },
+              { "title": "FIN", "start": 18637 }
+            ]
+          },
+          { "id": "vly5md", "title": "HXH 43-50", "startEp": 43, "endEp": 50, "chapters": [
+              { "title": "Début", "start": 362 },
+              { "title": "Jeux - Naruto Storm 4", "start": 1126 },
+              { "title": "Episode 43 - OPENING", "start": 8726 },
+              { "title": "Episode 43", "start": 8801 },
+              { "title": "FIN", "start": 18580 }
+            ]
+          },
+          { "id": "ua7wjr", "title": "HXH 51-63", "startEp": 51, "endEp": 63, "chapters": [
+              { "title": "Début", "start": 364 },
+              { "title": "Episode 51 - OPENING", "start": 1259 },
+              { "title": "Episode 51", "start": 1333 },
+              { "title": "FIN", "start": 18341 }
+            ]
+          },
+          { "id": "6haxng", "title": "HXH 64-75", "startEp": 64, "endEp": 75, "chapters": [
+              { "title": "Début", "start": 369 },
+              { "title": "Episode 64 - OPENING", "start": 929 },
+              { "title": "Episode 64", "start": 1037 },
+              { "title": "FIN", "start": 16357 }
+            ]
+          },
+          { "id": "ba6zw5", "title": "HXH 76-85", "startEp": 76, "endEp": 85, "chapters": [
+              { "title": "Début", "start": 372 },
+              { "title": "Tribunal des bannies", "start": 979 },
+              { "title": "Episode 76 - OPENING", "start": 6101 },
+              { "title": "Episode 76", "start": 6225 },
+              { "title": "FIN", "start": 18183 }
+            ]
+          },
+          { "id": "c6i3fw", "title": "HXH 86-97", "startEp": 86, "endEp": 97, "chapters": [
+              { "title": "Début", "start": 369 },
+              { "title": "Episode 86 - OPENING", "start": 1062 },
+              { "title": "Episode 86", "start": 1159 },
+              { "title": "FIN", "start": 16010 }
+            ]
+          },
+          { "id": "gyltjz", "title": "HXH 98-104", "startEp": 98, "endEp": 104, "chapters": [
+              { "title": "Début", "start": 361 },
+              { "title": "Jeux - POKEMON", "start": 1436 },
+              { "title": "Episode 98 - PréOpening", "start": 11095 },
+              { "title": "Episode 98 - OPENING", "start": 11206 },
+              { "title": "Episode 98", "start": 11283 },
+              { "title": "FIN", "start": 19768 }
+            ]
+          },
+          { "id": "o3t9zb", "title": "HXH 105-119", "startEp": 105, "endEp": 119, "chapters": [
+              { "title": "Début", "start": 374 },
+              { "title": "Episode 105 - PRE-OPENING", "start": 1154 },
+              { "title": "Episode 105 - OPENING", "start": 1306 },
+              { "title": "Episode 105", "start": 1386 },
+              { "title": "FIN", "start": 19408 }
+            ]
+          },
+          { "id": "98fqrs", "title": "HXH 143-148", "startEp": 143, "endEp": 148, "chapters": [
+              { "title": "Début", "start": 369 },
+              { "title": "JEUX - FNAF 1", "start": 1219 },
+              { "title": "Episode 143 - PRE-OPENING", "start": 11249 },
+              { "title": "Episode 143 - OPENING", "start": 11328 },
+              { "title": "Episode 143", "start": 11403 },
+              { "title": "FIN + DEBRIEF DE FIN", "start": 19096 },
+              { "title": "Résumé foireux - RE:TAKE", "start": 20411 },
+              { "title": "Feldup - Traumas d'enfance", "start": 21879 },
+              { "title": "Vidéo fun", "start": 25185 },
+              { "title": "Feldup - Traumas d'enfance P2", "start": 25413 },
+              { "title": "FIN", "start": 29677 }
+            ]
+          }
         ]
       },
       "narutokai": {
         "title": "Naruto KAI",
         "image": "https://myanimelist.net/images/anime/1141/142503.jpg",
         "videos": [
-          { "id": "g85qzb", "title": "Naruto KAI 1-3", "startEp": 1, "endEp": 3 },
-          { "id": "vtor88", "title": "Naruto KAI 4-5", "startEp": 4, "endEp": 5 },
-          { "id": "e1css9", "title": "Naruto KAI 6-7", "startEp": 6, "endEp": 7 },
-          { "id": "z0oql6", "title": "Naruto KAI 8-9-10", "startEp": 8, "endEp": 10 },
-          { "id": "p0n46b", "title": "Naruto KAI 11", "startEp": 11, "endEp": 11 },
-          { "id": "3htsoh", "title": "Naruto KAI 12-13", "startEp": 12, "endEp": 13 },
-          { "id": "ap8eka", "title": "Naruto KAI 14-15", "startEp": 14, "endEp": 15 },
-          { "id": "9xlnvu", "title": "Naruto KAI 16", "startEp": 16, "endEp": 16 },
-          { "id": "4xmqbp", "title": "Naruto KAI 17", "startEp": 17, "endEp": 17 },
-          { "id": "mpep8f", "title": "Naruto KAI 18-19", "startEp": 18, "endEp": 19 }
+          { "id": "g85qzb", "title": "Naruto KAI 1-3", "startEp": 1, "endEp": 3, "chapters": [
+              { "title": "Début", "start": 296 },
+              { "title": "Épisode 1", "start": 1769 },
+              { "title": "Épisode 2", "start": 7944 },
+              { "title": "Épisode 3", "start": 16203 },
+              { "title": "FIN", "start": 23418 }
+            ]
+          },
+          { "id": "vtor88", "title": "Naruto KAI 4-5", "startEp": 4, "endEp": 5, "chapters": [
+              { "title": "Début", "start": 289 },
+              { "title": "Zelda", "start": 1585 },
+              { "title": "Épisode 4", "start": 13727 },
+              { "title": "Épisode 5", "start": 21175 },
+              { "title": "FIN", "start": 27534 }
+            ]
+          },
+          { "id": "e1css9", "title": "Naruto KAI 6-7", "startEp": 6, "endEp": 7, "chapters": [
+              { "title": "Début", "start": 288 },
+              { "title": "Zelda", "start": 1113 },
+              { "title": "Épisode 6", "start": 11927 },
+              { "title": "Épisode 7", "start": 18720 },
+              { "title": "FIN", "start": 27356 }
+            ]
+          },
+          { "id": "z0oql6", "title": "Naruto KAI 8-9-10", "startEp": 8, "endEp": 10, "chapters": [
+              { "title": "Début", "start": 293 },
+              { "title": "Épisode 8", "start": 934 },
+              { "title": "Épisode 9", "start": 8361 },
+              { "title": "Épisode 10", "start": 15705 },
+              { "title": "FIN", "start": 22336 }
+            ]
+          },
+          { "id": "p0n46b", "title": "Naruto KAI 11", "startEp": 11, "endEp": 11, "chapters": [
+              { "title": "Début", "start": 291 },
+              { "title": "Zelda", "start": 1320 },
+              { "title": "Épisode 11", "start": 14966 },
+              { "title": "FIN", "start": 21852 }
+            ]
+          },
+          { "id": "3htsoh", "title": "Naruto KAI 12-13", "startEp": 12, "endEp": 13, "chapters": [
+              { "title": "Début", "start": 291 },
+              { "title": "Zelda", "start": 900 },
+              { "title": "Épisode 12", "start": 11462 },
+              { "title": "Épisode 13", "start": 19410 },
+              { "title": "FIN", "start": 27814 }
+            ]
+          },
+          { "id": "ap8eka", "title": "Naruto KAI 14-15", "startEp": 14, "endEp": 15, "chapters": [
+              { "title": "Début", "start": 298 },
+              { "title": "Épisode 14", "start": 1312 },
+              { "title": "Épisode 15", "start": 11163 },
+              { "title": "FIN", "start": 17405 }
+            ]
+          },
+          { "id": "9xlnvu", "title": "Naruto KAI 16", "startEp": 16, "endEp": 16, "chapters": [
+              { "title": "Début", "start": 302 },
+              { "title": "Zelda", "start": 1566 },
+              { "title": "Épisode 16", "start": 12934 },
+              { "title": "FIN", "start": 20624 }
+            ]
+          },
+          { "id": "4xmqbp", "title": "Naruto KAI 17", "startEp": 17, "endEp": 17, "chapters": [
+              { "title": "Début", "start": 295 },
+              { "title": "Stream Battle ( Perso Anime )", "start": 1504 },
+              { "title": "Anime Quiz - Devine le personnage", "start": 7814 },
+              { "title": "Anime Quiz - Coupe de cheveux", "start": 9539 },
+              { "title": "Épisode 17 ( Sans sond )", "start": 11286 },
+              { "title": "Épisode 17 ( Son )", "start": 11518 },
+              { "title": "FIN", "start": 20226 }
+            ]
+          },
+          { "id": "mpep8f", "title": "Naruto KAI 18-19", "startEp": 18, "endEp": 19, "chapters": [
+              { "title": "Début", "start": 296 },
+              { "title": "Zelda", "start": 1236 },
+              { "title": "Épisode 18", "start": 12165 },
+              { "title": "FIN", "start": 21397 }
+            ]
+          }
         ]
       },
       "shippuden": {
@@ -77,31 +232,193 @@
           { "id": "uxrs9b", "title": "NS 17-25", "startEp": 17, "endEp": 25, "chapters": [
               { "title": "Début", "start": 299 },
               { "title": "Zelda", "start": 945 },
-              { "title": "Episode 17 - Gaara succombe!", "start": 10086 }
+              { "title": "Episode 17 - Gaara succombe!", "start": 10086 },
+              { "title": "FIN", "start": 21096 }
             ]
           },
-          { "id": "mt2bat", "title": "NS 26-34", "startEp": 26, "endEp": 34 },
-          { "id": "5ix5lv", "title": "NS 35-46", "startEp": 35, "endEp": 46 },
-          { "id": "gz10nw", "title": "NS 47-53", "startEp": 47, "endEp": 53 },
-          { "id": "4is0k3", "title": "NS 54-66", "startEp": 54, "endEp": 66 },
-          { "id": "b2l5f4", "title": "NS 67-74", "startEp": 67, "endEp": 74 },
-          { "id": "b1bvh2", "title": "NS 75-90", "startEp": 75, "endEp": 90 },
-          { "id": "ttvls1", "title": "NS 91-102", "startEp": 91, "endEp": 102 },
-          { "id": "yiecwv", "title": "NS 103-113", "startEp": 103, "endEp": 113 },
-          { "id": "jyzy09", "title": "NS 114-130", "startEp": 114, "endEp": 130 },
-          { "id": "9csmxu", "title": "NS 131-139", "startEp": 131, "endEp": 139 },
-          { "id": "qpc5s9", "title": "NS 140-150", "startEp": 140, "endEp": 150 },
-          { "id": "10u51j", "title": "NS 151-159", "startEp": 151, "endEp": 159 },
-          { "id": "cobkqz", "title": "NS 160-169", "startEp": 160, "endEp": 169 },
-          { "id": "49oaok", "title": "NS 170-175", "startEp": 170, "endEp": 175 },
-          { "id": "y33fd0", "title": "NS 175-182", "startEp": 175, "endEp": 182 },
-          { "id": "ggonip", "title": "NS 183-191", "startEp": 183, "endEp": 191 },
-          { "id": "aa0h0f", "title": "NS 192-196", "startEp": 192, "endEp": 196 },
-          { "id": "3v914v", "title": "NS 197-210", "startEp": 197, "endEp": 210 },
-          { "id": "klpwyl", "title": "NS 211-216", "startEp": 211, "endEp": 216 },
-          { "id": "x1nqvi", "title": "NS 217-221", "startEp": 217, "endEp": 221 },
-          { "id": "8faly8", "title": "NS 223-236", "startEp": 223, "endEp": 236 },
-          { "id": "6y72fc", "title": "NS 243-256", "startEp": 243, "endEp": 256 },
+          { "id": "mt2bat", "title": "NS 26-34", "startEp": 26, "endEp": 34, "chapters": [
+              { "title": "Début", "start": 348 },
+              { "title": "Streambattle - Waifu", "start": 2062 },
+              { "title": "Résumé foireux NARUTO", "start": 8287 },
+              { "title": "Episode 26 - PRE-OPENING", "start": 9399 },
+              { "title": "Episode 26 - OPENING", "start": 9517 },
+              { "title": "Episode 26 - NAME", "start": 9607 },
+              { "title": "FIN", "start": 21659 }
+            ]
+          },
+          { "id": "5ix5lv", "title": "NS 35-46", "startEp": 35, "endEp": 46, "chapters": [
+              { "title": "Début", "start": 303 },
+              { "title": "Episode 35 - PRE-OPENING", "start": 1556 },
+              { "title": "Episode 35 - OPENING", "start": 1886 },
+              { "title": "Episode 35 - NAME", "start": 1981 },
+              { "title": "FIN", "start": 18418 }
+            ]
+          },
+          { "id": "gz10nw", "title": "NS 47-53", "startEp": 47, "endEp": 53, "chapters": [
+              { "title": "Début", "start": 305 },
+              { "title": "Streambattle - Best Husbando", "start": 940 },
+              { "title": "RE:TAKE - JJK", "start": 7609 },
+              { "title": "Guess Anime - by an image", "start": 8697 },
+              { "title": "Episode 47 - PRE-OPENING", "start": 10132 },
+              { "title": "Episode 47 - OPENING", "start": 10267 },
+              { "title": "Episode 47 - NAME", "start": 10357 },
+              { "title": "FIN", "start": 19338 }
+            ]
+          },
+          { "id": "4is0k3", "title": "NS 54-66", "startEp": 54, "endEp": 66, "chapters": [
+              { "title": "Trailer Vidéo", "start": 472 },
+              { "title": "Début", "start": 722 },
+              { "title": "Episode 54 - PRE-OPENING", "start": 2209 },
+              { "title": "Episode 54 - OPENING", "start": 2369 },
+              { "title": "Episode 54 - NAME", "start": 2466 },
+              { "title": "FIN", "start": 20696 }
+            ]
+          },
+          { "id": "b2l5f4", "title": "NS 67-74", "startEp": 67, "endEp": 74, "chapters": [
+              { "title": "Début", "start": 487 },
+              { "title": "JEUX - ZELDA BREATH OF THE WILD", "start": 1353 },
+              { "title": "Episode 67 - PRE-OPENING", "start": 9571 },
+              { "title": "Episode 67 - OPENING", "start": 9749 },
+              { "title": "Episode 67 - NAME", "start": 9850 },
+              { "title": "FIN", "start": 19638 }
+            ]
+          },
+          { "id": "b1bvh2", "title": "NS 75-89", "startEp": 75, "endEp": 89, "chapters": [
+              { "title": "Début", "start": 351 },
+              { "title": "Episode 75 - PRE-OPENING", "start": 1322 },
+              { "title": "Episode 75 - OPENING", "start": 1407 },
+              { "title": "Episode 75 - NAME", "start": 1500 },
+              { "title": "FIN", "start": 20578 }
+            ]
+          },
+          { "id": "ttvls1", "title": "NS 90-107", "startEp": 90, "endEp": 107, "chapters": [
+              { "title": "Début", "start": 357 },
+              { "title": "JEUX - ZELDA BREATH OF THE WILD", "start": 1393 },
+              { "title": "Episode 90 - PRE-OPENING", "start": 10971 },
+              { "title": "Episode 90 - OPENING", "start": 11043 },
+              { "title": "Episode 90 - NAME", "start": 11133 },
+              { "title": "FIN", "start": 21672 }
+            ]
+          },
+          { "id": "yiecwv", "title": "NS 108-113", "startEp": 108, "endEp": 113, "chapters": [
+              { "title": "Début", "start": 361 },
+              { "title": "JEUX - ZELDA BREATH OF THE WILD", "start": 1491 },
+              { "title": "Episode 108 - PRE-OPENING", "start": 12785 },
+              { "title": "Episode 108 - OPENING", "start": 12983 },
+              { "title": "Episode 108 - NAME", "start": 13075 },
+              { "title": "FIN", "start": 20626 }
+            ]
+          },
+          { "id": "jyzy09", "title": "NS 114-130", "startEp": 114, "endEp": 130, "chapters": [
+              { "title": "Début", "start": 0 },
+              { "title": "Episode 114 - PRE-OPENING", "start": 918 },
+              { "title": "Episode 114 - OPENING", "start": 966 },
+              { "title": "Episode 114 - NAME", "start": 1078 },
+              { "title": "FIN", "start": 23739 }
+            ]
+          },
+          { "id": "9csmxu", "title": "NS 131-139", "startEp": 131, "endEp": 139, "chapters": [
+              { "title": "Début", "start": 364 },
+              { "title": "JEUX - ZELDA", "start": 1727 },
+              { "title": "Episode 131 - PRE-OPENING", "start": 11310 },
+              { "title": "Episode 131 - OPENING", "start": 11824 },
+              { "title": "Episode 131 - NAME", "start": 11917 },
+              { "title": "FIN", "start": 23001 }
+            ]
+          },
+          { "id": "qpc5s9", "title": "NS 140-150", "startEp": 140, "endEp": 150, "chapters": [
+              { "title": "Début", "start": 0 },
+              { "title": "Episode 140 - PRE-OPENING", "start": 1021 },
+              { "title": "Episode 140 - OPENING", "start": 1475 },
+              { "title": "Episode 140 - NAME", "start": 1572 },
+              { "title": "FIN", "start": 20866 }
+            ]
+          },
+          { "id": "10u51j", "title": "NS 151-159", "startEp": 151, "endEp": 159, "chapters": [
+              { "title": "Début", "start": 0 },
+              { "title": "JEUX - ZELDA", "start": 318 },
+              { "title": "Episode 151 - OPENING", "start": 14759 },
+              { "title": "Episode 151 - NAME", "start": 14854 },
+              { "title": "FIN", "start": 22955 }
+            ]
+          },
+          { "id": "cobkqz", "title": "NS 160-169", "startEp": 160, "endEp": 169, "chapters": [
+              { "title": "JEUX - MARIO ODYSSEY", "start": 0 },
+              { "title": "Episode 160 - PRE-OPENING", "start": 1200 },
+              { "title": "Episode 160 - OPENING", "start": 1283 },
+              { "title": "Episode 160 - NAME", "start": 1373 },
+              { "title": "FIN", "start": 14150 }
+            ]
+          },
+          { "id": "49oaok", "title": "NS 170-175", "startEp": 170, "endEp": 175, "chapters": [
+              { "title": "Début", "start": 363 },
+              { "title": "Episode 170x171 - OPENING", "start": 1058 },
+              { "title": "Episode 170x171 - NAME", "start": 1146 }
+            ]
+          },
+          { "id": "y33fd0", "title": "NS 175-182", "startEp": 175, "endEp": 182, "chapters": [
+              { "title": "Episode 175", "start": 0 },
+              { "title": "FIN", "start": 11067 }
+            ]
+          },
+          { "id": "ggonip", "title": "NS 183-191", "startEp": 183, "endEp": 191, "chapters": [
+              { "title": "Début", "start": 362 },
+              { "title": "JEUX - MARIO ODYSSEY", "start": 1148 },
+              { "title": "Episode 183 - PRE-OPENING", "start": 12593 },
+              { "title": "Episode 183 - OPENING", "start": 12875 },
+              { "title": "Episode 183 - NAME", "start": 12965 },
+              { "title": "FIN", "start": 20298 }
+            ]
+          },
+          { "id": "aa0h0f", "title": "NS 192-196", "startEp": 192, "endEp": 196, "chapters": [
+              { "title": "Début", "start": 372 },
+              { "title": "JEUX - MARIO ODYSSEY", "start": 1213 },
+              { "title": "Episode 192 - PRE-OPENING", "start": 11399 },
+              { "title": "Episode 192 - OPENING", "start": 11514 },
+              { "title": "Episode 192 - NAME", "start": 11616 },
+              { "title": "FIN", "start": 21897 }
+            ]
+          },
+          { "id": "3v914v", "title": "NS 197-210", "startEp": 197, "endEp": 210, "chapters": [
+              { "title": "Début", "start": 375 },
+              { "title": "Episode 197x198 - PRE-OPENING", "start": 1431 },
+              { "title": "Episode 197x198 - OPENING", "start": 1543 },
+              { "title": "Episode 197x198 - NAME", "start": 1632 },
+              { "title": "FIN", "start": 17673 }
+            ]
+          },
+          { "id": "klpwyl", "title": "NS 211-216", "startEp": 211, "endEp": 216, "chapters": [
+              { "title": "Début", "start": 360 },
+              { "title": "JEUX - We where here together", "start": 1324 },
+              { "title": "Episode 211 - NAME", "start": 15560 },
+              { "title": "FIN", "start": 25632 }
+            ]
+          },
+          { "id": "x1nqvi", "title": "NS 217-222", "startEp": 217, "endEp": 222, "chapters": [
+              { "title": "Début", "start": 363 },
+              { "title": "JEUX - MARIO ODYSSEY", "start": 1893 },
+              { "title": "Episode 217 - PRE-OPENING", "start": 11964 },
+              { "title": "Episode 217 - OPENING", "start": 12165 },
+              { "title": "Episode 217 - NAME", "start": 12265 },
+              { "title": "FIN", "start": 19874 }
+            ]
+          },
+          { "id": "8faly8", "title": "NS 223-236", "startEp": 223, "endEp": 236, "chapters": [
+              { "title": "Début", "start": 391 },
+              { "title": "Episode 223 - PRE-OPENING", "start": 1382 },
+              { "title": "Episode 223 - OPENING", "start": 1462 },
+              { "title": "Episode 223 - NAME", "start": 1569 },
+              { "title": "FIN", "start": 19694 }
+            ]
+          },
+          { "id": "6y72fc", "title": "NS 243-256", "startEp": 243, "endEp": 256, "chapters": [
+              { "title": "Début", "start": 384 },
+              { "title": "Episode 243 - PRE-OPENING", "start": 1507 },
+              { "title": "Episode 243 - OPENING", "start": 1671 },
+              { "title": "Episode 243 - NAME", "start": 1774 },
+              { "title": "FIN", "start": 19408 }
+            ]
+          },
           { "id": "o1y30a", "title": "NS 257-263", "startEp": 257, "endEp": 263 },
           { "id": "91jthq", "title": "NS 264-271", "startEp": 264, "endEp": 271 },
           { "id": "8xhgbn", "title": "NS 272-277", "startEp": 272, "endEp": 277 },
@@ -374,11 +691,53 @@
         "title": "Parasite",
         "image": "https://myanimelist.net/images/anime/3/73178.jpg",
         "videos": [
-          { "id": "y04u9y", "title": "PARASITE 1", "startEp": 1, "endEp": 1 },
-          { "id": "p8qvf2", "title": "PARASITE 2", "startEp": 2, "endEp": 2 },
-          { "id": "cshk5i", "title": "PARASITE 3", "startEp": 3, "endEp": 3 },
-          { "id": "x9215v", "title": "PARASITE 4", "startEp": 4, "endEp": 4 },
-          { "id": "7b4y26", "title": "PARASITE FINAL", "startEp": 5, "endEp": 5 }
+          { "id": "y04u9y", "title": "PARASITE 1-8", "startEp": 1, "endEp": 8, "chapters": [
+              { "title": "Début", "start": 290 },
+              { "title": "Episode 1 - PRE-OPENING", "start": 1520 },
+              { "title": "Episode 1 - OPENING", "start": 1546 },
+              { "title": "Épisode 1", "start": 1726 },
+              { "title": "FIN", "start": 13313 }
+            ]
+          },
+          { "id": "p8qvf2", "title": "PARASITE 9-12", "startEp": 9, "endEp": 12, "chapters": [
+              { "title": "Début", "start": 319 },
+              { "title": "JEUX - RATCHET CLANK", "start": 1827 },
+              { "title": "Episode 9 - PRE-OPENING", "start": 10469 },
+              { "title": "Episode 9 - OPENING", "start": 10604 },
+              { "title": "Episode 9", "start": 10706 },
+              { "title": "FIN", "start": 16551 }
+            ]
+          },
+          { "id": "cshk5i", "title": "PARASITE 13-16", "startEp": 13, "endEp": 16, "chapters": [
+              { "title": "Début", "start": 307 },
+              { "title": "Episode 13 - PRE-OPENING", "start": 947 },
+              { "title": "Episode 13 - OPENING", "start": 1037 },
+              { "title": "Episode 13", "start": 1133 },
+              { "title": "FIN ANIME", "start": 6674 },
+              { "title": "FOOT - FRANCE x PORTUGAL", "start": 6904 }
+            ]
+          },
+          { "id": "x9215v", "title": "PARASITE 17-20", "startEp": 17, "endEp": 20, "chapters": [
+              { "title": "Début", "start": 293 },
+              { "title": "JEUX - ZELDA BREATH OF THE WILD", "start": 2821 },
+              { "title": "Episode 17 - PRE-OPENING", "start": 12024 },
+              { "title": "Episode 17 - OPENING", "start": 12131 },
+              { "title": "Episode 17", "start": 12220 },
+              { "title": "FIN", "start": 17484 }
+            ]
+          },
+          { "id": "7b4y26", "title": "PARASITE 21-24", "startEp": 21, "endEp": 24, "chapters": [
+              { "title": "Début", "start": 290 },
+              { "title": "Blindtest - ANIME OPENING", "start": 1285 },
+              { "title": "Blindtest - DESSIN ANIME (2000)", "start": 3835 },
+              { "title": "Blindtest - ANIME OPENING ( EASY )", "start": 6201 },
+              { "title": "Vidéo Drôle - DISCORD", "start": 8856 },
+              { "title": "Episode 21 - PRE-OPENING", "start": 10016 },
+              { "title": "Episode 21 - OPENING", "start": 10040 },
+              { "title": "Episode 21", "start": 10131 },
+              { "title": "FIN", "start": 15892 }
+            ]
+          }
         ]
       }
     }
