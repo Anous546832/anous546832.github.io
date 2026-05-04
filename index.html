@@ -8,6 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.embed.ly/player-0.1.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
 /* ═══════════════════════════════════════════
@@ -105,6 +106,8 @@ header {
   align-items: center;
   gap: 10px;
   padding: 0 20px;
+  min-width: 0;
+  overflow: hidden;
 }
 
 /* ── Chapitre Info dans le header ────────────────────────────────────── */
@@ -114,14 +117,23 @@ header {
   gap: 6px;
   background: var(--bg3);
   border: 1px solid var(--border);
-  padding: 6px 0 6px 14px;
+  padding: 6px 10px 6px 14px;
   border-radius: 20px;
   font-size: 12px;
   font-weight: 500;
   color: var(--text-mid);
-  max-width: 380px;
+  max-width: 100%;
+  min-width: 0;
+  flex-shrink: 1;
   cursor: pointer;
   transition: all var(--transition);
+}
+#chapterDisplay .chapter-title {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
 }
 #chapterDisplay:hover {
   background: var(--bg2);
@@ -133,11 +145,6 @@ header {
   letter-spacing: 1.2px;
   color: var(--red);
   text-transform: uppercase;
-  white-space: nowrap;
-}
-#chapterDisplay .chapter-title {
-  overflow: hidden;
-  text-overflow: ellipsis;
   white-space: nowrap;
 }
 #chapterDisplay .chapter-arrow {
@@ -166,8 +173,9 @@ header {
   z-index: 2000;
   min-width: 260px;
   max-width: 360px;
-  max-height: 400px;
+  max-height: 60vh;
   overflow: hidden;
+  flex-direction: column;
   animation: dropdownIn 0.2s ease;
 }
 @keyframes dropdownIn {
@@ -176,7 +184,6 @@ header {
 }
 .chapter-dropdown.active {
   display: flex;
-  flex-direction: column;
 }
 .chapter-dropdown-header {
   padding: 12px 14px;
@@ -193,6 +200,7 @@ header {
 .chapter-dropdown-scroll {
   overflow-y: auto;
   flex: 1;
+  max-height: 100%;
 }
 .chapter-dropdown-scroll::-webkit-scrollbar { width: 4px; }
 .chapter-dropdown-scroll::-webkit-scrollbar-track { background: transparent; }
@@ -881,7 +889,83 @@ header {
    MOBILE
 ═══════════════════════════════════════════ */
 @media (max-width: 768px) {
-  :root { --sidebar-w: 100%; }
+  :root { 
+    --sidebar-w: 100%;
+    --header-h: 90px;
+  }
+  
+  /* Header sur 2 lignes en portrait */
+  header {
+    padding: 4px 8px;
+    gap: 0;
+    flex-wrap: wrap;
+    height: auto;
+    min-height: var(--header-h);
+  }
+  
+  /* Ligne 1 : -logo + chapitre */
+  .logo { display: none; }
+  
+  .header-center {
+    flex: 1;
+    padding: 0 6px;
+    order: 2;
+    width: 100%;
+    justify-content: center;
+    margin-top: 4px;
+  }
+
+  #chapterDisplay {
+    max-width: 100%;
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+  #chapterDisplay .chapter-title {
+    max-width: 100%;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  
+  /* Ligne 2 : tous les boutons */
+  .header-actions {
+    order: 3;
+    width: 100%;
+    justify-content: center;
+    gap: 6px;
+    margin-top: 4px;
+    padding-bottom: 2px;
+  }
+  .header-actions .btn {
+    padding: 6px 10px;
+    font-size: 10px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+  }
+  #cinemaBtnHeader { 
+    min-width: 30px;
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    font-size: 14px;
+  }
+  #devModeBtn, #watchBtn {
+    min-width: auto;
+    width: auto;
+    height: 30px;
+    font-size: 10px;
+    padding: 6px 8px;
+  }
+  #headerNextBtn {
+    height: 30px;
+    padding: 6px 10px;
+    font-size: 10px;
+  }
+  
   .sidebar {
     position: absolute;
     left: 0; top: 0; bottom: 0;
@@ -892,14 +976,15 @@ header {
     min-width: 0;
     opacity: 0;
   }
-  .logo-text { display: none; }
   #nextOverlay { bottom: 10px; right: 10px; left: 10px; }
+  
   .chapter-dropdown {
     left: 10px;
     right: 10px;
     transform: none;
     min-width: auto;
     max-width: none;
+    max-height: 50vh;
   }
   @keyframes dropdownInMob {
     from { opacity: 0; transform: translateY(-8px); }
@@ -910,11 +995,128 @@ header {
   }
 }
 
+/* Mode paysage : header normal sur 1 ligne */
+@media (min-width: 481px) and (max-width: 768px) {
+  :root {
+    --header-h: 52px;
+  }
+  
+  header {
+    flex-wrap: nowrap;
+    height: var(--header-h);
+    min-height: var(--header-h);
+    padding: 0 8px;
+  }
+  
+  .header-center {
+    order: 0;
+    width: auto;
+    flex: 1;
+    margin-top: 0;
+  }
+  
+  .header-actions {
+    order: 0;
+    width: auto;
+    margin-top: 0;
+    padding-bottom: 0;
+    gap: 4px;
+  }
+  
+  .logo-text { display: none; }
+  #chapterDisplay {
+    max-width: 100%;
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+  #chapterDisplay .chapter-title {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 100%;
+  }
+}
+
 /* ═══════════════════════════════════════════
    SCROLLBAR GLOBAL
 ═══════════════════════════════════════════ */
 ::-webkit-scrollbar { width: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
+/* ═══════════════════════════════════════════
+   WATCH TOGETHER
+═══════════════════════════════════════════ */
+.watch-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.8);
+  z-index: 3000;
+  justify-content: center;
+  align-items: center;
+}
+.watch-overlay.active {
+  display: flex;
+}
+.watch-modal {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 24px;
+  width: 90%;
+  max-width: 400px;
+  text-align: center;
+}
+.watch-modal h3 {
+  font-family: var(--font-title);
+  font-size: 22px;
+  letter-spacing: 2px;
+  margin-bottom: 16px;
+}
+.watch-code {
+  font-size: 36px;
+  font-weight: 700;
+  letter-spacing: 8px;
+  color: var(--red);
+  margin: 16px 0;
+  font-family: monospace;
+}
+.watch-input {
+  width: 100%;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px;
+  color: var(--text);
+  font-size: 20px;
+  text-align: center;
+  letter-spacing: 6px;
+  font-family: monospace;
+  outline: none;
+  margin-bottom: 12px;
+}
+.watch-input:focus {
+  border-color: var(--red);
+}
+.watch-host-badge {
+  display: none;
+  position: fixed;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(232,25,44,0.9);
+  color: white;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 12px;
+  border-radius: 12px;
+  z-index: 1001;
+  letter-spacing: 1px;
+}
+.watch-host-badge.active {
+  display: block;
+}
 /* ═══════════════════════════════════════════
    MODE DÉVELOPPEUR
 ═══════════════════════════════════════════ */
@@ -970,9 +1172,10 @@ header {
 
 .dev-row {
   display: flex;
-  gap: 8px;
+  gap: 4px;
   margin-bottom: 8px;
   align-items: center;
+  flex-wrap: wrap;
 }
 
 .dev-input {
@@ -1070,6 +1273,9 @@ header {
 .btn-dev-add {
   background: #ff8800;
   color: #000;
+  padding: 8px 10px;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 .btn-dev-add:hover { background: #ffa033; }
 .btn-dev-export {
@@ -1115,8 +1321,11 @@ header {
   </div>
 
   <div class="header-actions">
-    <button class="btn btn-ghost" id="cinemaBtn" onclick="toggleCinema()">⊞ Cinéma</button>
+    <button class="btn btn-ghost" id="watchBtn" onclick="startWatchMenu()" title="Watch Together">👥</button>
+    <button class="btn btn-ghost" id="linkDeviceBtn" onclick="openLinkDeviceMenu()" title="Lier un appareil">🔗</button>
     <button class="btn btn-ghost" id="devModeBtn" onclick="toggleDevMode()" title="Mode développeur (Ctrl+Shift+D)">🛠</button>
+    <button class="btn btn-ghost" id="headerSyncBtn" onclick="forceSyncNow()" title="Synchroniser">🔄</button>
+    <button class="btn btn-ghost" id="cinemaBtnHeader" onclick="toggleCinema()" title="Mode cinéma">⊞</button>
     <button class="btn btn-primary" id="headerNextBtn" onclick="loadNextVideoOrChapter()">Suivant →</button>
   </div>
 </header>
@@ -1159,7 +1368,7 @@ header {
   <!-- Panneau développeur -->
   <div class="dev-panel" id="devPanel">
     <div class="dev-panel-title">
-      <span>🛠 Ajouter un chapitre</span>
+      <span>🛠 Ajouter un chapitre <span style="font-size:9px;opacity:0.5;margin-left:8px;">ID: ${syncId}</span></span>
       <button class="btn-dev btn-dev-close" onclick="closeDevPanel()">✕</button>
     </div>
     <div class="dev-row">
@@ -1179,6 +1388,58 @@ header {
     </div>
   </div>
 
+  <!-- Link Device Overlay -->
+  <div class="watch-overlay" id="linkDeviceOverlay">
+    <div class="watch-modal">
+      <h3>🔗 Lier un appareil</h3>
+      <p style="font-size:10px;color:var(--text-dim);margin-bottom:8px;">Copie l'ID ci-dessous et envoie-le à ton autre appareil :</p>
+      <p style="font-size:9px;color:var(--text);background:var(--bg3);padding:8px;border-radius:4px;word-break:break-all;user-select:all;margin-bottom:8px;" id="linkDeviceMyId"></p>
+      <button class="btn-dev btn-dev-export" onclick="copySyncId()" style="width:100%;margin-bottom:12px;">📋 Copier mon ID</button>
+      
+      <div style="color:var(--text-dim);font-size:11px;margin:8px 0;">— ou entre l'ID d'un autre appareil —</div>
+      <input type="text" id="linkDeviceIdInput" placeholder="sv_..." class="dev-input" style="width:100%;font-size:10px;margin-bottom:8px;" />
+      <button class="btn btn-primary" onclick="linkById()" style="width:100%;margin-bottom:8px;">🔗 Lier avec cet ID</button>
+      <button class="btn btn-ghost" onclick="closeLinkDeviceMenu()" style="width:100%;">✕ Fermer</button>
+    </div>
+  </div>
+  <!-- Watch Together Overlay -->
+  <div class="watch-overlay" id="watchOverlay">
+    <div class="watch-modal" id="watchModal">
+      <div id="watchMenu">
+        <h3>👥 Watch Together</h3>
+        <button class="btn btn-primary" onclick="hostWatchSession()" style="width:100%;margin-bottom:12px;">🎬 Créer une session</button>
+        <div style="color:var(--text-dim);font-size:11px;margin:8px 0;">Ou rejoindre une session</div>
+        <input type="text" class="watch-input" id="watchCodeInput" placeholder="ABC123" maxlength="6" style="text-transform:uppercase;" />
+        <button class="btn btn-ghost" onclick="joinWatchSession()" style="width:100%;">🔗 Rejoindre</button>
+        <button class="btn btn-ghost" onclick="closeWatchMenu()" style="width:100%;margin-top:8px;">✕ Fermer</button>
+      </div>
+      <div id="watchHosting" style="display:none;">
+        <h3>🎬 Session créée</h3>
+        <div class="watch-code" id="watchCodeDisplay">------</div>
+        <p style="font-size:12px;color:var(--text-dim);">Partage ce code avec tes potes</p>
+        <button class="btn btn-ghost" onclick="copyWatchCode()" style="width:100%;margin:8px 0;">📋 Copier le code</button>
+        <button class="btn btn-ghost" onclick="closeWatchMenu()" style="width:100%;margin-bottom:8px;">✕ Fermer le menu</button>
+<button class="btn btn-primary" onclick="stopWatchSession()" style="width:100%;">⏹ Arrêter la session</button>
+      </div>
+      <div id="watchGuest" style="display:none;">
+        <h3>🔗 Connecté</h3>
+        <p style="font-size:14px;color:var(--text);">Session : <span id="watchGuestCode" style="color:var(--red);font-weight:600;"></span></p>
+        <p style="font-size:11px;color:var(--text-dim);">Ton pote contrôle la vidéo</p>
+        <div style="margin:12px 0;text-align:left;">
+          <label style="font-size:11px;color:var(--text-dim);display:flex;align-items:center;gap:8px;cursor:pointer;">
+            <input type="checkbox" id="watchSyncMode" onchange="toggleSyncMode()" />
+            Mode précision (délai compensé)
+          </label>
+          <p style="font-size:9px;color:var(--text-dim);margin:4px 0 0 24px;">Activé = plus précis sur desktop<br>Désactivé = plus stable sur mobile</p>
+        </div>
+        <button class="btn btn-ghost" onclick="closeWatchMenu()" style="width:100%;margin-top:8px;">✕ Fermer le menu</button>
+<button class="btn btn-primary" onclick="leaveWatchSession()" style="width:100%;margin-top:4px;">🚪 Quitter la session</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Watch Host Badge -->
+  <div class="watch-host-badge" id="watchHostBadge">👥 HÔTE</div>
 </div>
 
 <script>
@@ -1204,6 +1465,184 @@ let skipAutoScroll = false;
 const RESUME_KEY   = "sv_res_v1";
 const WATCHED_KEY  = "sv_wat_v1";
 const TIMECODE_KEY = "sv_time_v1";
+
+// ─── Supabase ────────────────────────────────────────────────────────────────
+const SUPABASE_URL = "https://fjuwemzbsiwxvlajdckx.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZqdXdlbXpic2l3eHZsYWpkY2t4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcyNzQ2OTAsImV4cCI6MjA5Mjg1MDY5MH0.QALJfDIWnAgY174aYkT3xXtB3ZzUsBftyoDusQV30fE";
+// ─── Supabase Watch Together ───────────────────────────────────────────
+const SUPABASE_WATCH_URL = "https://lzuoubzegbfelrftgpqt.supabase.co";  // ← WatchTogether
+const SUPABASE_WATCH_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx6dW91YnplZ2JmZWxyZnRncHF0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc4MjA2OTYsImV4cCI6MjA5MzM5NjY5Nn0.BE2BAtNMTcjJt702Dbrvw3aShJNGsFWM1x3ILbSzCLU";    // ← clé anon du 2ème projet
+let supabaseWatch = null;
+let watchChannel = null;
+let isWatchHost = false;
+let watchSessionCode = null;
+let watchSyncInterval = null;
+
+try {
+  supabaseWatch = window.supabase.createClient(SUPABASE_WATCH_URL, SUPABASE_WATCH_KEY);
+  console.log("✅ Supabase Watch connecté");
+} catch(e) {
+  console.warn("⚠ Supabase Watch non disponible");
+}
+
+let supabaseClient = null;
+let syncId = localStorage.getItem("sv_sync_id") || "";
+let supabaseReady = false;
+let lastSyncTime = 0;
+
+try {
+  supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  
+  if (!syncId) {
+    syncId = 'sv_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+    localStorage.setItem("sv_sync_id", syncId);
+  }
+  supabaseReady = true;
+  console.log("✅ Supabase connecté");
+} catch(e) {
+  console.warn("⚠ Supabase non disponible");
+}
+
+// ─── Sync Cloud ──────────────────────────────────────────────────────────────
+async function syncToCloud() {
+  if (!supabaseReady || !supabaseClient) return;
+  
+  try {
+    // Vérifier si on a le lock
+    const { data: current } = await supabaseClient
+      .from('progress')
+      .select('locked_by')
+      .eq('id', syncId)
+      .single();
+    
+    // Si un autre appareil a le lock, ne pas écrire
+    if (current && current.locked_by && current.locked_by !== syncId) {
+      document.getElementById("lockedBadge").style.display = "inline-block";
+      console.log("🔒 Verrouillé par un autre appareil");
+      return;
+    }
+    
+    // On est libre ou maître, écrire
+    document.getElementById("lockedBadge").style.display = "none";
+    
+    const progress = {
+      resume: getResume(),
+      watched: getWatched(),
+      timecodes: getTimecodes()
+    };
+    
+    await supabaseClient
+      .from('progress')
+      .upsert({ 
+        id: syncId, 
+        data: progress, 
+        updated_at: new Date().toISOString(),
+        locked_by: syncId
+      });
+    console.log("☁️ Sync OK");
+  } catch(e) {
+    console.warn("⚠ Sync échoué:", e.message);
+  }
+}
+
+async function syncToCloud() {
+  if (!supabaseReady || !supabaseClient) return;
+  
+  const progress = {
+    resume: getResume(),
+    watched: getWatched(),
+    timecodes: getTimecodes()
+  };
+  
+  try {
+    await supabaseClient
+      .from('progress')
+      .upsert({ 
+        id: syncId, 
+        data: progress, 
+        updated_at: new Date().toISOString()
+      });
+    console.log("☁️ Sync OK");
+  } catch(e) {
+    console.warn("⚠ Sync échoué:", e.message);
+  }
+}
+
+async function checkCloudUpdates() {
+  if (!supabaseReady || !supabaseClient) return;
+  
+  try {
+    const { data, error } = await supabaseClient
+      .from('progress')
+      .select('data, updated_at')
+      .eq('id', syncId)
+      .single();
+    
+    if (error || !data) return;
+    
+    const cloudTime = data.updated_at ? new Date(data.updated_at).getTime() : 0;
+    const localTime = parseInt(localStorage.getItem("sv_last_sync") || "0");
+    
+    if (cloudTime > localTime + 5000) {
+      console.log("☁️ Fusion des données cloud...");
+      
+      // Fusionner au lieu d'écraser
+      const cloud = data.data;
+      const local = {
+        resume: getResume(),
+        watched: getWatched(),
+        timecodes: getTimecodes()
+      };
+      
+      // Fusion watched : union des deux listes
+      const mergedWatched = [...new Set([...local.watched, ...(cloud.watched || [])])];
+      
+      // Fusion resume : garder le plus récent pour chaque clé
+      const mergedResume = { ...(cloud.resume || {}), ...local.resume };
+      Object.keys(mergedResume).forEach(k => {
+        if (cloud.resume?.[k] && local.resume?.[k]) {
+          mergedResume[k] = (cloud.resume[k].time > local.resume[k].time) ? cloud.resume[k] : local.resume[k];
+        }
+      });
+      
+      // Fusion timecodes : garder le plus grand
+      const mergedTimecodes = { ...(cloud.timecodes || {}), ...local.timecodes };
+      Object.keys(mergedTimecodes).forEach(k => {
+        if (cloud.timecodes?.[k] && local.timecodes?.[k]) {
+          mergedTimecodes[k] = Math.max(cloud.timecodes[k], local.timecodes[k]);
+        }
+      });
+      
+      localStorage.setItem(RESUME_KEY, JSON.stringify(mergedResume));
+      localStorage.setItem(WATCHED_KEY, JSON.stringify(mergedWatched));
+      localStorage.setItem(TIMECODE_KEY, JSON.stringify(mergedTimecodes));
+      localStorage.setItem("sv_last_sync", cloudTime.toString());
+      
+      // Sauvegarder la fusion dans le cloud aussi
+      syncToCloud();
+      
+      if (!currentVideo) {
+        render();
+      }
+    }
+  } catch(e) {}
+}
+
+let pendingSync = null;
+
+function saveWithSync() {
+  const now = Date.now();
+  localStorage.setItem("sv_last_sync", now.toString());
+  
+  // Annuler le précédent timer
+  if (pendingSync) clearTimeout(pendingSync);
+  
+  // Programmer une sync dans 1 seconde
+  pendingSync = setTimeout(async () => {
+    await syncToCloud();
+    pendingSync = null;
+  }, 1000);
+}
 
 const getResume    = () => JSON.parse(localStorage.getItem(RESUME_KEY))   || {};
 const getWatched   = () => JSON.parse(localStorage.getItem(WATCHED_KEY))  || [];
@@ -1292,30 +1731,30 @@ function findCurrentChapterIndex(time, chapters) {
 function getNextChapterOrVideo() {
   if (!currentVideo || !currentCreator || !currentCategory) return null;
   
+  // Toujours prioriser la vidéo suivante
+  const vids = data[currentCreator].categories[currentCategory].videos;
+  const vidIdx = vids.findIndex(v => v.id === currentVideo.id);
+  
+  if (vidIdx !== -1 && vidIdx < vids.length - 1) {
+    return {
+      type: 'video',
+      video: vids[vidIdx + 1],
+      chapterIndex: 0
+    };
+  }
+  
+  // Pas de vidéo suivante → chercher un chapitre suivant
   const chapters = getChapters(currentVideo);
-  // Récupérer le timecode sauvegardé plutôt que le temps live du player
   const timecodes = getTimecodes();
   const currentTime = timecodes[currentVideo.id] || 0;
   const currentIdx = findCurrentChapterIndex(currentTime, chapters);
   
-  // S'il y a un chapitre suivant dans la même vidéo
   if (currentIdx < chapters.length - 1) {
     return {
       type: 'chapter',
       video: currentVideo,
       chapterIndex: currentIdx + 1,
       chapter: chapters[currentIdx + 1]
-    };
-  }
-  
-  // Sinon, passer à la vidéo suivante
-  const vids = data[currentCreator].categories[currentCategory].videos;
-  const vidIdx = vids.findIndex(v => v.id === currentVideo.id);
-  if (vidIdx !== -1 && vidIdx < vids.length - 1) {
-    return {
-      type: 'video',
-      video: vids[vidIdx + 1],
-      chapterIndex: 0
     };
   }
   
@@ -1386,6 +1825,7 @@ function loadVideo(v, chapterIndex = 0) {
     chapterIndex: chapterIndex
   };
   localStorage.setItem(RESUME_KEY, JSON.stringify(resume));
+  saveWithSync();
 
   // Embed
   const url = `https://cdn.embedly.com/widgets/media.html?src=https%3A%2F%2Fstreamable.com%2Fe%2F${v.id}&display_name=Streamable&url=${encodeURIComponent("https://streamable.com/"+v.id)}&key=96a16496e36611e091d14040d3dc5c07&type=text%2Fhtml&schema=streamable`;
@@ -1393,6 +1833,8 @@ function loadVideo(v, chapterIndex = 0) {
     `<iframe id="main-player" src="${url}" allowfullscreen scrolling="no"></iframe>`;
 
   player = new playerjs.Player(document.getElementById("main-player"));
+
+  player.setLoop(false);
 
   player.on('ready', () => {
     // Restaurer le timecode de la vidéo ou aller au début du chapitre
@@ -1402,6 +1844,41 @@ function loadVideo(v, chapterIndex = 0) {
     if (targetTime > 0) {
       player.setCurrentTime(targetTime);
     }
+
+    // Watch Together : détecter pause/play
+    player.on('pause', () => {
+      if (isWatchHost && watchChannel && currentVideo) {
+        const tc = getTimecodes()[currentVideo.id] || 0;
+        watchChannel.send({
+          type: 'broadcast',
+          event: 'sync',
+          payload: { 
+            timecode: Math.floor(tc),
+            videoId: currentVideo.id,
+            sentAt: Date.now(),
+            isPaused: true
+          }
+        });
+        console.log("⏸ Pause envoyée");
+      }
+    });
+
+    player.on('play', () => {
+      if (isWatchHost && watchChannel && currentVideo) {
+        const tc = getTimecodes()[currentVideo.id] || 0;
+        watchChannel.send({
+          type: 'broadcast',
+          event: 'sync',
+          payload: { 
+            timecode: Math.floor(tc),
+            videoId: currentVideo.id,
+            sentAt: Date.now(),
+            isPaused: false
+          }
+        });
+        console.log("▶ Play envoyé");
+      }
+    });
 
     player.on('timeupdate', res => {
       if (res.seconds > 0) {
@@ -1558,11 +2035,25 @@ document.addEventListener('click', (e) => {
   }
 });
 
+let lastTimecodeSave = {};
+let lastTimecodeValue = {};
+
 function saveTimecode(id, value) {
   const sec = typeof value === 'string' ? parseTimeToSeconds(value) : value;
   const t = getTimecodes();
   t[id] = sec;
   localStorage.setItem(TIMECODE_KEY, JSON.stringify(t));
+  
+  // Ne sync le timecode que toutes les 2 minutes par vidéo
+  const now = Date.now();
+  if (!lastTimecodeSave[id] || now - lastTimecodeSave[id] >= 20000) {
+    // Vérifier que la valeur a changé
+    if (lastTimecodeValue[id] !== sec) {
+      lastTimecodeSave[id] = now;
+      lastTimecodeValue[id] = sec;
+      saveWithSync();
+    }
+  }
 }
 
 function toggleWatched(id, e) {
@@ -1577,6 +2068,7 @@ function toggleWatched(id, e) {
     localStorage.setItem(TIMECODE_KEY, JSON.stringify(t));
   }
   localStorage.setItem(WATCHED_KEY, JSON.stringify(w));
+  saveWithSync();
   skipAutoScroll = true;
   render();
 }
@@ -1620,42 +2112,42 @@ function checkNextVideoOrChapter() {
 
 function showNextOverlay() {
   const overlay = document.getElementById("nextOverlay");
-  const next = getNextChapterOrVideo();
+  if (!currentVideo || !currentCreator || !currentCategory) return;
   
-  if (next) {
-    document.getElementById("nextTitle").textContent = 
-      next.type === 'chapter' ? next.chapter.title : next.video.title;
-    overlay.querySelector('p').textContent = next.type === 'chapter' ? 'CHAPITRE SUIVANT' : 'ÉPISODE SUIVANT';
+  const vids = data[currentCreator].categories[currentCategory].videos;
+  const vidIdx = vids.findIndex(v => v.id === currentVideo.id);
+  
+  if (vidIdx !== -1 && vidIdx < vids.length - 1) {
+    overlay.querySelector('p').textContent = 'ÉPISODE SUIVANT';
+    document.getElementById("nextTitle").textContent = vids[vidIdx + 1].title;
     overlay.style.display = "block";
+  } else {
+    overlay.style.display = "none";
   }
 }
 
 function loadNextVideoOrChapter() {
   document.getElementById("nextOverlay").style.display = "none";
   const next = getNextChapterOrVideo();
-  
   if (!next) return;
   
-  if (next.type === 'chapter') {
-    skipToChapter(next.chapterIndex);
-  } else {
-    // Vider le timecode dans tous les cas
+  if (next.type === 'video') {
     if (currentVideo) {
       const t = getTimecodes();
       delete t[currentVideo.id];
       localStorage.setItem(TIMECODE_KEY, JSON.stringify(t));
+      let w = getWatched();
+      if (!w.includes(currentVideo.id)) {
+        w.push(currentVideo.id);
+        localStorage.setItem(WATCHED_KEY, JSON.stringify(w));
+      }
+      saveWithSync();
     }
-    
-    // Marquer comme vu si pas déjà fait
-    let w = getWatched();
-    if (currentVideo && !w.includes(currentVideo.id)) {
-      w.push(currentVideo.id);
-      localStorage.setItem(WATCHED_KEY, JSON.stringify(w));
-    }
-    
     creator = currentCreator;
     category = currentCategory;
     loadVideo(next.video, 0);
+  } else {
+    skipToChapter(next.chapterIndex);
   }
 }
 
@@ -1664,7 +2156,7 @@ function toggleCinema() {
   cinemaMode = !cinemaMode;
   document.getElementById("list").classList.toggle("hidden", cinemaMode);
   document.getElementById("searchBarArea").classList.toggle("cinema-hidden", cinemaMode);
-  document.getElementById("cinemaBtn").textContent = cinemaMode ? "⊟ Liste" : "⊞ Cinéma";
+  document.getElementById("cinemaBtnHeader").textContent = cinemaMode ? "⊟" : "⊞";
 }
 
 // ─── Search ───────────────────────────────────────────────────────────────────
@@ -2090,6 +2582,8 @@ function openDevPanel() {
   const titleInput = document.getElementById("devTitleInput");
   const chapterList = document.getElementById("devChapterList");
   const clearBtn = document.querySelector('.dev-actions .btn-dev-close');
+
+  document.querySelector('.dev-panel-title span').innerHTML = `🛠 Ajouter un chapitre <span style="font-size:8px;opacity:0.5;margin-left:8px;word-break:break-all;">ID: ${syncId}</span>`;
   
   if (currentVideo) {
     timeInput.disabled = false;
@@ -2745,9 +3239,302 @@ function importProgress() {
     alert("❌ Format invalide. Vérifie que tu as bien copié toute la donnée.");
   }
 }
+
+// ─── Code de transfert ───────────────────────────────────────────────────────
+
+function openLinkDeviceMenu() {
+  document.getElementById("linkDeviceMyId").textContent = syncId;
+  document.getElementById("linkDeviceOverlay").classList.add("active");
+}
+
+function closeLinkDeviceMenu() {
+  document.getElementById("linkDeviceOverlay").classList.remove("active");
+}
+
+async function linkById() {
+  const targetId = document.getElementById("linkDeviceIdInput").value.trim();
+  if (!targetId.startsWith("sv_")) {
+    alert("❌ ID invalide (doit commencer par sv_)");
+    return;
+  }
+  
+  if (targetId === syncId) {
+    alert("❌ C'est déjà ton ID !");
+    return;
+  }
+  
+  if (!supabaseReady || !supabaseClient) {
+    alert("⚠ Supabase non connecté");
+    return;
+  }
+  
+  try {
+    // Récupérer les données de l'appareil cible
+    const { data: targetData, error } = await supabaseClient
+      .from('progress')
+      .select('data')
+      .eq('id', targetId)
+      .single();
+    
+    if (error || !targetData || !targetData.data) {
+      alert("❌ Appareil introuvable. Vérifie l'ID.");
+      return;
+    }
+    
+    if (!confirm("⚠ Cela va remplacer tes données locales par celles de l'autre appareil. Continuer ?")) return;
+    
+    // Appliquer les données
+    const cloud = targetData.data;
+    localStorage.setItem(RESUME_KEY, JSON.stringify(cloud.resume || {}));
+    localStorage.setItem(WATCHED_KEY, JSON.stringify(cloud.watched || []));
+    localStorage.setItem(TIMECODE_KEY, JSON.stringify(cloud.timecodes || {}));
+    localStorage.setItem("sv_sync_id", targetId);
+    syncId = targetId;
+    localStorage.setItem("sv_last_sync", Date.now().toString());
+    
+    closeLinkDeviceMenu();
+    alert("✅ Appareils liés ! Rechargement...");
+    location.reload();
+    
+  } catch(e) {
+    alert("❌ Erreur: " + e.message);
+  }
+}
+
+function copySyncId() {
+  navigator.clipboard.writeText(syncId).then(() => {
+    alert("📋 ID copié !");
+  }).catch(() => {
+    prompt("Copie manuelle :", syncId);
+  });
+}
+
+// ─── Watch Together TEST ─────────────────────────────────────────────────────
+let lastTimecode = 0;
+let isPaused = false;
+function startWatchMenu() {
+  // Si déjà en session, afficher l'écran approprié
+  if (watchSessionCode) {
+    document.getElementById("watchOverlay").classList.add("active");
+    document.getElementById("watchMenu").style.display = "none";
+    document.getElementById("watchHosting").style.display = "none";
+    document.getElementById("watchGuest").style.display = "none";
+    
+    if (isWatchHost) {
+      document.getElementById("watchHosting").style.display = "block";
+      document.getElementById("watchCodeDisplay").textContent = watchSessionCode;
+    } else {
+      document.getElementById("watchGuest").style.display = "block";
+      document.getElementById("watchGuestCode").textContent = watchSessionCode;
+      // Restaurer l'état de la checkbox
+      document.getElementById("watchSyncMode").checked = usePrecisionMode;
+    }
+    return;
+  }
+  
+  if (!currentVideo) {
+    alert("🎬 Lance d'abord une vidéo");
+    return;
+  }
+  
+  document.getElementById("watchOverlay").classList.add("active");
+  document.getElementById("watchMenu").style.display = "block";
+  document.getElementById("watchHosting").style.display = "none";
+  document.getElementById("watchGuest").style.display = "none";
+}
+
+function closeWatchMenu() {
+  document.getElementById("watchOverlay").classList.remove("active");
+}
+
+function generateWatchCode() {
+  return Math.random().toString(36).substring(2, 8).toUpperCase();
+}
+
+function copyWatchCode() {
+  navigator.clipboard.writeText(watchSessionCode).then(() => alert("📋 " + watchSessionCode));
+}
+
+async function hostWatchSession() {
+  if (!supabaseWatch || !currentVideo) return;
+  
+  watchSessionCode = generateWatchCode();
+  isWatchHost = true;
+  
+  watchChannel = supabaseWatch.channel('session-' + watchSessionCode);
+  
+  watchChannel.subscribe((status) => {
+    console.log("🎬 Status hôte:", status);
+  });
+  
+  let wasPaused = false;
+  watchSyncInterval = setInterval(() => {
+    if (!isWatchHost || !currentVideo) return;
+    
+    player.getPaused((paused) => {
+      const tc = getTimecodes()[currentVideo.id] || 0;
+      
+      watchChannel.send({
+        type: 'broadcast',
+        event: 'sync',
+        payload: { 
+          timecode: Math.floor(tc),
+          videoId: currentVideo.id,
+          sentAt: Date.now(),
+          isPaused: paused
+        }
+      });
+    });
+  }, 3000);
+  
+  document.getElementById("watchMenu").style.display = "none";
+  document.getElementById("watchHosting").style.display = "block";
+  document.getElementById("watchCodeDisplay").textContent = watchSessionCode;
+  document.getElementById("watchHostBadge").classList.add("active");
+}
+
+async function joinWatchSession() {
+  if (!supabaseWatch) return;
+  
+  const code = document.getElementById("watchCodeInput").value.trim().toUpperCase();
+  watchSessionCode = code;
+  isWatchHost = false;
+  
+  watchChannel = supabaseWatch.channel('session-' + code);
+  
+  watchChannel.on('broadcast', { event: 'sync' }, (payload) => {
+    if (isWatchHost) return;
+    
+    const { timecode, videoId, sentAt, isPaused } = payload.payload;
+    
+    // Charger la vidéo si différente
+    if (videoId !== currentVideo?.id) {
+      const vid = findVideoById(videoId);
+      if (vid) loadVideo(vid);
+      return;
+    }
+    
+    if (player && currentVideo) {
+      const localTime = getTimecodes()[currentVideo.id] || 0;
+      
+      // En pause : forcer le timecode immédiatement
+      if (isPaused) {
+        player.pause();
+        player.setCurrentTime(timecode);
+        console.log("⏸ Sync pause | timecode:", timecode);
+        return;
+      }
+
+      // En lecture : forcer play
+      player.play();
+      
+      // En lecture : calcul normal
+      let targetTime;
+      if (usePrecisionMode && sentAt) {
+        const delay = (Date.now() - sentAt) / 1000;
+        targetTime = timecode + delay;
+      } else {
+        targetTime = timecode;
+      }
+      
+      const diff = Math.abs(localTime - targetTime);
+      
+      if (diff > 1) {
+        console.log("▶ Sync lecture | cible:", targetTime.toFixed(1), "diff:", diff.toFixed(1) + "s");
+        player.setCurrentTime(targetTime);
+      }
+    }
+  });
+  
+  watchChannel.subscribe((status) => {
+    console.log("🔗 Status invité:", status);
+    document.getElementById("watchMenu").style.display = "none";
+    document.getElementById("watchGuest").style.display = "block";
+    document.getElementById("watchGuestCode").textContent = code;
+  });
+}
+
+function findVideoById(id) {
+  for (const cK of Object.keys(data)) {
+    for (const catK of Object.keys(data[cK].categories)) {
+      const v = data[cK].categories[catK].videos.find(v => v.id === id);
+      if (v) {
+        creator = cK;
+        category = catK;
+        view = "videos";
+        return v;
+      }
+    }
+  }
+  return null;
+}
+
+async function stopWatchSession() {
+  await leaveWatchSession();
+}
+
+async function leaveWatchSession() {
+  if (watchSyncInterval) {
+    clearInterval(watchSyncInterval);
+    watchSyncInterval = null;
+  }
+  if (watchChannel) {
+    await supabaseWatch.removeChannel(watchChannel);
+  }
+  watchChannel = null;
+  watchSessionCode = null;
+  isWatchHost = false;
+  usePrecisionMode = false;
+  document.getElementById("watchOverlay").classList.remove("active");
+  document.getElementById("watchHostBadge").classList.remove("active");
+  console.log("🚪 Session quittée");
+}
+
+let usePrecisionMode = false;
+function toggleSyncMode() {
+  usePrecisionMode = document.getElementById("watchSyncMode").checked;
+  console.log("🎯 Mode sync:", usePrecisionMode ? "Précision" : "Stable");
+}
+
+async function forceSyncNow() {
+  if (!supabaseReady || !supabaseClient) {
+    alert("⚠ Supabase non connecté");
+    return;
+  }
+  
+  try {
+    const { data, error } = await supabaseClient
+      .from('progress')
+      .select('data, updated_at')
+      .eq('id', syncId)
+      .single();
+    
+    if (error || !data) {
+      console.log("☁️ Aucune donnée cloud, envoi des données locales...");
+      await syncToCloud();
+      alert("✅ Données locales envoyées !");
+      return;
+    }
+    
+    if (confirm("☁️ Écraser les données locales par le cloud et recharger ?")) {
+      localStorage.setItem(RESUME_KEY, JSON.stringify(data.data.resume || {}));
+      localStorage.setItem(WATCHED_KEY, JSON.stringify(data.data.watched || []));
+      localStorage.setItem(TIMECODE_KEY, JSON.stringify(data.data.timecodes || {}));
+      localStorage.setItem("sv_last_sync", Date.now().toString());
+      await syncToCloud();
+      location.reload();
+    }
+  } catch(e) {
+    alert("❌ Erreur de synchronisation: " + e.message);
+  }
+}
+
 // Charger les chapitres dev au démarrage
 loadDevChapters();
-document.addEventListener("DOMContentLoaded", loadDatabase);
+document.addEventListener("DOMContentLoaded", async () => {
+  await loadDatabase();
+  // La sync cloud se fait automatiquement via forceSyncNow ou le bouton 🔄
+});
 </script>
 </body>
 </html>
