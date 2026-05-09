@@ -196,22 +196,56 @@ function goTo(targetView) {
 }
 
 // ─── Recherche ─────────────────────────────────────────────────────────────
+let searchTimeout = null;
+
 function deepSearch() {
+  clearTimeout(searchTimeout);
+  searchTimeout = setTimeout(() => {
+    _deepSearch();
+  }, 150);
+}
+
+function _deepSearch() {
   const val = document.getElementById("searchInput").value.toLowerCase().trim();
   document.getElementById("clearSearchBtn").style.display = val ? "block" : "none";
   if (!val) { isSearching = false; render(); return; }
   isSearching = true;
+
   const scroll = document.getElementById("sidebarScroll");
   scroll.innerHTML = `<div class="section-label">Résultats</div>`;
   let count = 0;
-  Object.keys(data).forEach(cK => Object.keys(data[cK].categories).forEach(catK => data[cK].categories[catK].videos.forEach(v => {
-    if (v.title.toLowerCase().includes(val) || data[cK].name.toLowerCase().includes(val) || data[cK].categories[catK].title.toLowerCase().includes(val)) {
-      const el = document.createElement("div"); el.className = "item";
-      el.innerHTML = `<div class="item-left"><div class="item-icon">▶</div><div><div class="item-title">${v.title}</div><div class="search-result-sub">${data[cK].name} · ${data[cK].categories[catK].title}${v.chapters?.length?` · ${v.chapters.length} chapitres`:''}</div></div></div>`;
-      el.onclick = () => { creator = cK; category = catK; view = "videos"; clearSearch(); loadVideo(v); };
-      scroll.appendChild(el); count++;
+
+  for (const cK in data) {
+    const creator = data[cK];
+    const creatorName = creator._name || (creator._name = creator.name.toLowerCase());
+    for (const catK in creator.categories) {
+      const category = creator.categories[catK];
+      const categoryTitle = category._title || (category._title = category.title.toLowerCase());
+      const videos = category.videos;
+      for (let i = 0; i < videos.length; i++) {
+        const v = videos[i];
+        const title = v._title || (v._title = v.title.toLowerCase());
+        if (title.includes(val) || creatorName.includes(val) || categoryTitle.includes(val)) {
+          const el = document.createElement("div");
+          el.className = "item";
+          el.innerHTML = `
+            <div class="item-left">
+              <div class="item-icon">▶</div>
+              <div>
+                <div class="item-title">${v.title}</div>
+                <div class="search-result-sub">${creator.name} · ${category.title}${v.chapters?.length ? ` · ${v.chapters.length} chapitres` : ''}</div>
+              </div>
+            </div>`;
+          el.onclick = () => { creator = cK; category = catK; view = "videos"; clearSearch(); loadVideo(v); };
+          scroll.appendChild(el);
+          count++;
+          if (count >= 100) break;
+        }
+      }
+      if (count >= 100) break;
     }
-  })));
+    if (count >= 100) break;
+  }
   if (!count) scroll.innerHTML += `<div style="color:var(--text-dim);padding:16px 6px;">Aucun résultat pour "${val}"</div>`;
   renderBreadcrumb();
 }
