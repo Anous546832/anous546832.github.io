@@ -4,6 +4,9 @@ let player = null;
 let cinemaMode = false;
 let currentChapterIndex = 0, chapterDropdownOpen = false;
 let lastTimecodeSave = {}, lastTimecodeValue = {};
+let inactivityPoints = []; // [{ timecode: 1234, timestamp: ... }]
+let lastInteraction = Date.now();
+let lastInactivitySave = 0;
 
 // ─── Chapitres ───────────────────────────────────────────────────────────────
 function getChapters(video) {
@@ -94,7 +97,11 @@ function toggleWatched(id, e) {
 // ─── Lecture vidéo ───────────────────────────────────────────────────────────
 function loadVideo(v, chapterIndex = 0) {
   if (!v) return;
+  document.getElementById("nextOverlay").style.display = "none";
   currentVideo = v; currentCreator = creator; currentCategory = category; currentChapterIndex = chapterIndex;
+  inactivityPoints = [];
+  lastInteraction = Date.now();
+  lastInactivitySave = 0;
   const chapters = getChapters(v);
   const chapter = chapters[chapterIndex] || chapters[0];
   updateChapterDisplay(chapter, chapters);
@@ -120,6 +127,11 @@ function loadVideo(v, chapterIndex = 0) {
     player.on('timeupdate', res => {
       if (res.seconds > 0) {
         saveTimecode(v.id, res.seconds);
+        const now = Date.now();
+        if (now - lastInteraction > 1200000 && now - lastInactivitySave > 1200000) {
+          inactivityPoints.push({ timecode: Math.floor(res.seconds), timestamp: now });
+          lastInactivitySave = now;
+        }
         const activeInput = document.querySelector('.item.active .time-input');
         if (activeInput) activeInput.value = formatSeconds(res.seconds);
         const newIdx = findCurrentChapterIndex(res.seconds, chapters);
@@ -158,23 +170,71 @@ function checkNextVideoOrChapter() {
   document.getElementById("nextTitle").textContent = next.type === 'chapter' ? next.chapter.title : next.video.title;
 }
 function showNextOverlay() {
-  if (!currentVideo || !currentCreator || !currentCategory) return;
+  const overlay = document.getElementById("nextOverlay");
+  if (!currentVideo || !currentCreator || !currentCategory) {
+    overlay.style.display = "none";
+    return;
+  }
+  
   const vids = data[currentCreator].categories[currentCategory].videos;
   const idx = vids.findIndex(v => v.id === currentVideo.id);
+  
   if (idx !== -1 && idx < vids.length - 1) {
-    document.getElementById("nextOverlay").querySelector('p').textContent = 'ÉPISODE SUIVANT';
-    document.getElementById("nextTitle").textContent = vids[idx + 1].title;
-    document.getElementById("nextOverlay").style.display = "block";
-  } else document.getElementById("nextOverlay").style.display = "none";
+    const nextVideo = vids[idx + 1];
+    const hasPoints = inactivityPoints.length > 0;
+    
+    document.getElementById("nextTitle").textContent = nextVideo.title;
+    document.getElementById("nextOverlay").querySelector("p").textContent = "ÉPISODE SUIVANT";
+    
+    // Supprimer l'ancien select s'il existe
+    const oldSelect = document.getElementById("inactivitySelect");
+    if (oldSelect) oldSelect.remove();
+    
+    // Supprimer l'ancien bouton s'il existe
+    const oldBtn = document.getElementById("resumeInactivityBtn");
+    if (oldBtn) oldBtn.remove();
+    
+    if (hasPoints) {
+      const select = document.createElement("select");
+      select.id = "inactivitySelect";
+      select.style.cssText = "width:100%;margin-bottom:8px;background:var(--bg3);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:6px;font-size:11px;font-family:var(--font-body);box-sizing:border-box;";
+      select.innerHTML = `
+        <option value="">💤 Moments d'inactivité</option>
+        ${inactivityPoints.slice().reverse().map(p => `
+          <option value="${p.timecode}">${formatSeconds(p.timecode)}</option>
+        `).join('')}
+      `;
+      
+      const btn = document.createElement("button");
+      btn.id = "resumeInactivityBtn";
+      btn.className = "btn btn-ghost";
+      btn.style.width = "100%";
+      btn.style.marginBottom = "4px";
+      btn.textContent = "↩ Reprendre au point sélectionné";
+      btn.onclick = resumeFromInactivity;
+      
+      overlay.insertBefore(btn, overlay.querySelector(".btn-primary"));
+      overlay.insertBefore(select, overlay.querySelector(".btn-primary"));
+    }
+    
+    overlay.style.display = "block";
+  } else {
+    overlay.style.display = "none";
+  }
 }
-function loadNextVideoOrChapter() {
+
+function resumeFromInactivity() {
+  const select = document.getElementById("inactivitySelect");
+  if (!select || !select.value) return;
+  
+  const timecode = parseInt(select.value);
   document.getElementById("nextOverlay").style.display = "none";
-  const next = getNextChapterOrVideo();
-  if (!next) return;
-  if (next.type === 'video') {
-    if (currentVideo) { const t = getTimecodes(); delete t[currentVideo.id]; localStorage.setItem(TIMECODE_KEY, JSON.stringify(t)); let w = getWatched(); if (!w.includes(currentVideo.id)) { w.push(currentVideo.id); localStorage.setItem(WATCHED_KEY, JSON.stringify(w)); } saveWithSync(); }
-    creator = currentCreator; category = currentCategory; loadVideo(next.video, 0);
-  } else skipToChapter(next.chapterIndex);
+  
+  if (player && currentVideo) {
+    player.setCurrentTime(timecode);
+    player.play();
+    document.getElementById("headerNextBtn").style.display = "none";
+  }
 }
 
 // ─── Cinéma ─────────────────────────────────────────────────────────────────

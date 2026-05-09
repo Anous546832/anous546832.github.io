@@ -10,3 +10,9 @@ document.addEventListener("DOMContentLoaded", async () => {
 document.addEventListener('keydown', (e) => {
   if (e.ctrlKey && e.shiftKey && e.key === 'D') { e.preventDefault(); toggleDevMode(); }
 });
+
+['mousemove', 'keydown', 'touchstart', 'click', 'scroll'].forEach(eventName => {
+  document.addEventListener(eventName, () => {
+    lastInteraction = Date.now();
+  });
+});

@@ -673,6 +673,7 @@ header {
   position: absolute;
   bottom: 30px;
   right: 30px;
+  max-width: 300px;
   background: rgba(10,10,12,0.92);
   border: 1px solid var(--border);
   border-radius: 12px;
