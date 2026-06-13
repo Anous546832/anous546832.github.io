@@ -446,6 +446,21 @@
           { "id": "9lbcrb", "title": "NARUTO THE LAST" }
         ]
       },
+      "boruto": {
+        "title": "Boruto",
+        "image": "https://cdn.myanimelist.net/images/anime/1091/99847.jpg",
+        "videos": [
+          { "id": "mgplm8", "title": "BORUTO 1-10", "startEp": 1, "endEp": 10 },
+          { "id": "4kp63d", "title": "BORUTO 11-15", "startEp": 11, "endEp": 15 },
+          { "id": "htmpu9", "title": "BORUTO 16-26", "startEp": 16, "endEp": 26 },
+          { "id": "2tlmq6", "title": "BORUTO 27-39", "startEp": 27, "endEp": 39 },
+          { "id": "ezrctn", "title": "BORUTO 40-49", "startEp": 40, "endEp": 49 },
+          { "id": "39c0ol", "title": "BORUTO 50-60", "startEp": 50, "endEp": 60 },
+          { "id": "e7j594", "title": "BORUTO 61-70", "startEp": 61, "endEp": 70 },
+          { "id": "690esc", "title": "BORUTO 105-112", "startEp": 105, "endEp": 112 },
+          { "id": "4x9kej", "title": "BORUTO 113-122", "startEp": 113, "endEp": 122 }
+        ]
+      },
       "onepiece": {
         "title": "One Piece",
         "image": "https://myanimelist.net/images/anime/1244/138851.jpg",
