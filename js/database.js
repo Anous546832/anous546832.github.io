@@ -5,17 +5,24 @@ let isSearching = false;
 let openSagas = {};
 let skipAutoScroll = false;
 
+// Cache pour les lookups lowercase (évite de muter les objets data)
+const _lcCache = new WeakMap();
+function _getLower(obj, key) {
+  let cache = _lcCache.get(obj);
+  if (!cache) { _lcCache.set(obj, cache = {}); }
+  return cache[key] ?? (cache[key] = String(obj[key]).toLowerCase());
+}
+
 // ─── Chargement ──────────────────────────────────────────────────────────────
 async function loadDatabase() {
   try {
     const r = await fetch('data/data.json');
     if (!r.ok) throw new Error(`HTTP ${r.status}`);
-    data = JSON.parse(await r.text());
-    console.log("JSON parsé");
+    data = await r.json();
     // Migration anciennes clés
     ["nf_res_v21", "nf_wat_v21", "nf_time_v21"].forEach((k, i) => {
-      const old = localStorage.getItem(k);
       const newKey = [RESUME_KEY, WATCHED_KEY, TIMECODE_KEY][i];
+      const old = localStorage.getItem(k);
       if (old && !localStorage.getItem(newKey)) localStorage.setItem(newKey, old);
     });
     render();
@@ -102,12 +109,20 @@ function render() {
     scroll.querySelector('.back-btn').onclick = () => { view = "categories"; category = null; render(); };
 
     if (catData.sagas?.length) {
+      // Construit sagaVideoIds en même temps qu'on render les sagas (évite la double boucle)
+      const sagaVideoIds = new Set();
+
       catData.sagas.forEach(saga => {
-        const sagaArcs = (catData.arcs && saga.arcIds) ? saga.arcIds.map(id => catData.arcs.find(a => a.id === id)).filter(Boolean) : [];
+        const sagaArcs = (catData.arcs && saga.arcIds)
+          ? saga.arcIds.map(id => catData.arcs.find(a => a.id === id)).filter(Boolean)
+          : [];
         const sagaVideos = sagaArcs.length
           ? videos.filter(v => v.startEp && sagaArcs.some(arc => v.startEp <= arc.endEp && v.endEp >= arc.startEp))
           : [...videos];
         if (!sagaVideos.length) return;
+
+        sagaVideos.forEach(v => sagaVideoIds.add(v.id));
+
         const sagaHeader = document.createElement("div");
         sagaHeader.className = "saga-header";
         sagaHeader.innerHTML = `<span class="saga-icon">▶</span><div class="saga-info"><div class="saga-title">${saga.title}</div><div class="saga-count">${sagaVideos.length} vidéo${sagaVideos.length>1?'s':''}${sagaArcs.length ? ` · ${sagaArcs[0].startEp}-${sagaArcs[sagaArcs.length-1].endEp}` : ''}</div></div>`;
@@ -129,42 +144,47 @@ function render() {
           sagaVideos.forEach(v => {
             const arc = getArcForEpisode(sagaArcs, v.startEp);
             if (arc && arc.id !== lastArcId) { sagaContent.appendChild(createArcHeaderElement(arc, catData)); lastArcId = arc.id; }
-            const el = createVideoElement(v, catData); el.classList.add("saga-indented"); sagaContent.appendChild(el);
+            const el = createVideoElement(v, catData, watched, timecodes, resume);
+            el.classList.add("saga-indented");
+            sagaContent.appendChild(el);
           });
         } else {
-          sagaVideos.forEach(v => { const el = createVideoElement(v, catData); el.classList.add("saga-indented"); sagaContent.appendChild(el); });
+          sagaVideos.forEach(v => {
+            const el = createVideoElement(v, catData, watched, timecodes, resume);
+            el.classList.add("saga-indented");
+            sagaContent.appendChild(el);
+          });
         }
         scroll.appendChild(sagaHeader);
         scroll.appendChild(sagaContent);
       });
-      // Vidéos hors saga
-      const sagaVideoIds = new Set();
-      catData.sagas.forEach(saga => {
-        const sArcs = (catData.arcs && saga.arcIds) ? saga.arcIds.map(id => catData.arcs.find(a => a.id === id)).filter(Boolean) : [];
-        const sv = sArcs.length ? videos.filter(v => v.startEp && sArcs.some(arc => v.startEp <= arc.endEp && v.endEp >= arc.startEp)) : [...videos];
-        sv.forEach(v => sagaVideoIds.add(v.id));
-      });
+
+      // Vidéos hors saga — appendChild au lieu de innerHTML+= pour préserver les event listeners
       const remaining = videos.filter(v => !sagaVideoIds.has(v.id));
       if (remaining.length) {
-        scroll.innerHTML += `<div class="section-label" style="margin-top:16px;">Hors saga</div>`;
-        remaining.forEach(v => scroll.appendChild(createVideoElement(v, catData)));
+        const hLabel = document.createElement("div");
+        hLabel.className = "section-label";
+        hLabel.style.marginTop = "16px";
+        hLabel.textContent = "Hors saga";
+        scroll.appendChild(hLabel);
+        remaining.forEach(v => scroll.appendChild(createVideoElement(v, catData, watched, timecodes, resume)));
       }
     } else if (catData.arcs?.length) {
       let lastArcId = null;
       videos.forEach(v => {
         const arc = v.startEp ? getArcForEpisode(catData.arcs, v.startEp) : null;
         if (arc && arc.id !== lastArcId) { scroll.appendChild(createArcHeaderElement(arc, catData)); lastArcId = arc.id; }
-        scroll.appendChild(createVideoElement(v, catData));
+        scroll.appendChild(createVideoElement(v, catData, watched, timecodes, resume));
       });
     } else {
-      videos.forEach(v => scroll.appendChild(createVideoElement(v, catData)));
+      videos.forEach(v => scroll.appendChild(createVideoElement(v, catData, watched, timecodes, resume)));
     }
+
     const resetBtn = document.createElement("button");
     resetBtn.className = "reset-btn";
     resetBtn.textContent = "♻ Réinitialiser la série";
     resetBtn.onclick = unmarkAllInCategory;
     scroll.appendChild(resetBtn);
-    scroll.querySelector('.reset-btn').onclick = unmarkAllInCategory;
 
     setTimeout(() => {
       if (skipAutoScroll) { skipAutoScroll = false; return; }
@@ -200,9 +220,7 @@ let searchTimeout = null;
 
 function deepSearch() {
   clearTimeout(searchTimeout);
-  searchTimeout = setTimeout(() => {
-    _deepSearch();
-  }, 150);
+  searchTimeout = setTimeout(_deepSearch, 150);
 }
 
 function _deepSearch() {
@@ -212,19 +230,26 @@ function _deepSearch() {
   isSearching = true;
 
   const scroll = document.getElementById("sidebarScroll");
-  scroll.innerHTML = `<div class="section-label">Résultats</div>`;
+  scroll.innerHTML = "";
+  const label = document.createElement("div");
+  label.className = "section-label";
+  label.textContent = "Résultats";
+  scroll.appendChild(label);
+
   let count = 0;
 
-  for (const cK in data) {
-    const creator = data[cK];
-    const creatorName = creator._name || (creator._name = creator.name.toLowerCase());
-    for (const catK in creator.categories) {
-      const category = creator.categories[catK];
-      const categoryTitle = category._title || (category._title = category.title.toLowerCase());
-      const videos = category.videos;
+  // Utiliser creatorObj/catObj pour éviter de shadower les variables globales creator/category
+  // (un shadow + assignation sur un const provoquerait un TypeError au clic)
+  outer: for (const cK in data) {
+    const creatorObj = data[cK];
+    const creatorName = _getLower(creatorObj, 'name');
+    for (const catK in creatorObj.categories) {
+      const catObj = creatorObj.categories[catK];
+      const categoryTitle = _getLower(catObj, 'title');
+      const videos = catObj.videos;
       for (let i = 0; i < videos.length; i++) {
         const v = videos[i];
-        const title = v._title || (v._title = v.title.toLowerCase());
+        const title = _getLower(v, 'title');
         if (title.includes(val) || creatorName.includes(val) || categoryTitle.includes(val)) {
           const el = document.createElement("div");
           el.className = "item";
@@ -233,23 +258,32 @@ function _deepSearch() {
               <div class="item-icon">▶</div>
               <div>
                 <div class="item-title">${v.title}</div>
-                <div class="search-result-sub">${creator.name} · ${category.title}${v.chapters?.length ? ` · ${v.chapters.length} chapitres` : ''}</div>
+                <div class="search-result-sub">${creatorObj.name} · ${catObj.title}${v.chapters?.length ? ` · ${v.chapters.length} chapitres` : ''}</div>
               </div>
             </div>`;
           el.onclick = () => { creator = cK; category = catK; view = "videos"; clearSearch(); loadVideo(v); };
           scroll.appendChild(el);
-          count++;
-          if (count >= 100) break;
+          if (++count >= 100) break outer;
         }
       }
-      if (count >= 100) break;
     }
-    if (count >= 100) break;
   }
-  if (!count) scroll.innerHTML += `<div style="color:var(--text-dim);padding:16px 6px;">Aucun résultat pour "${val}"</div>`;
+
+  if (!count) {
+    const noResult = document.createElement("div");
+    noResult.style.cssText = "color:var(--text-dim);padding:16px 6px;";
+    noResult.textContent = `Aucun résultat pour "${val}"`;
+    scroll.appendChild(noResult);
+  }
   renderBreadcrumb();
 }
-function clearSearch() { document.getElementById("searchInput").value = ""; document.getElementById("clearSearchBtn").style.display = "none"; isSearching = false; render(); }
+
+function clearSearch() {
+  document.getElementById("searchInput").value = "";
+  document.getElementById("clearSearchBtn").style.display = "none";
+  isSearching = false;
+  render();
+}
 
 // ─── Helpers Sagas/Arcs ──────────────────────────────────────────────────────
 function getArcForEpisode(arcs, ep) {
@@ -258,18 +292,21 @@ function getArcForEpisode(arcs, ep) {
   return null;
 }
 function createArcHeaderElement(arc, cat) {
-  const header = document.createElement("div"); header.className = "arc-header";
+  const header = document.createElement("div");
+  header.className = "arc-header";
   const arcVideos = cat.videos.filter(v => v.startEp && v.startEp <= arc.endEp && v.endEp >= arc.startEp);
   header.innerHTML = `<span style="background:${arc.color};width:8px;height:8px;border-radius:50%;flex-shrink:0;box-shadow:0 0 8px ${arc.color}44;"></span>
     <span class="arc-header-title" style="border-color:${arc.color}33;color:${arc.color};">${arc.title}</span>
     <span class="arc-header-count">${arcVideos.length} vidéo${arcVideos.length>1?'s':''}</span><span class="arc-header-line"></span>`;
   return header;
 }
-function createVideoElement(v, catData) {
-  const watched = getWatched(), timecodes = getTimecodes();
+function createVideoElement(v, catData, watched, timecodes, resume) {
+  if (!watched) watched = getWatched();
+  if (!timecodes) timecodes = getTimecodes();
+  if (!resume) resume = getResume();
   const isW = watched.includes(v.id), isCurrent = currentVideo?.id === v.id;
   const tc = timecodes[v.id], displayTime = formatSeconds(tc);
-  const isInResume = Object.values(getResume()).some(r => r.video?.id === v.id);
+  const isInResume = Object.values(resume).some(r => r.video?.id === v.id);
   const chapterCount = v.chapters?.length || 0;
   const el = document.createElement("div");
   el.className = `item ${isCurrent?'active':''} ${isW?'watched':''} ${isInResume && !isCurrent?'resume-marked':''}`;
@@ -286,12 +323,15 @@ function createVideoElement(v, catData) {
   el.querySelector('.status-icon').onclick = (e) => toggleWatched(v.id, e);
   return el;
 }
-function deleteFromResume(key) { const r = getResume(); delete r[key]; localStorage.setItem(RESUME_KEY, JSON.stringify(r)); }
+function deleteFromResume(key) {
+  const r = getResume();
+  delete r[key];
+  localStorage.setItem(RESUME_KEY, JSON.stringify(r));
+}
 function unmarkAllInCategory() {
   if (!confirm("Réinitialiser les épisodes vus de cette série ?")) return;
-  let w = getWatched();
-  const ids = data[creator].categories[category].videos.map(v => v.id);
-  w = w.filter(id => !ids.includes(id));
+  const ids = new Set(data[creator].categories[category].videos.map(v => v.id));
+  const w = getWatched().filter(id => !ids.has(id));
   localStorage.setItem(WATCHED_KEY, JSON.stringify(w));
   render();
 }

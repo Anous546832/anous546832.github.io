@@ -3,13 +3,15 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="StreamVault — Suivi de progression pour tes séries animées">
+<meta name="theme-color" content="#0f0f14">
 <title>StreamVault</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎬</text></svg>">
+<!-- preconnect sur les deux domaines Google Fonts : googleapis pour le CSS, gstatic pour les fichiers de police -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/style.css">
-<script src="https://cdn.embed.ly/player-0.1.0.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 <header>
@@ -26,19 +28,19 @@
     <div class="chapter-dropdown" id="chapterDropdown"></div>
   </div>
   <div class="header-actions">
-    <button class="btn btn-ghost" id="watchBtn" onclick="startWatchMenu()" title="Watch Together">👥</button>
-    <button class="btn btn-ghost" id="linkDeviceBtn" onclick="openLinkDeviceMenu()" title="Lier un appareil">🔗</button>
-    <button class="btn btn-ghost" id="devModeBtn" onclick="toggleDevMode()" title="Mode développeur (Ctrl+Shift+D)">🛠</button>
-    <button class="btn btn-ghost" id="headerSyncBtn" onclick="forceSyncNow()" title="Synchroniser">🔄</button>
-    <button class="btn btn-ghost" id="cinemaBtnHeader" onclick="toggleCinema()" title="Mode cinéma">⊞</button>
-    <button class="btn btn-primary" id="headerNextBtn" onclick="loadNextVideoOrChapter()">Suivant →</button>
+    <button type="button" class="btn btn-ghost" id="watchBtn" onclick="startWatchMenu()" title="Watch Together" aria-label="Watch Together">👥</button>
+    <button type="button" class="btn btn-ghost" id="linkDeviceBtn" onclick="openLinkDeviceMenu()" title="Lier un appareil" aria-label="Lier un appareil">🔗</button>
+    <button type="button" class="btn btn-ghost" id="devModeBtn" onclick="toggleDevMode()" title="Mode développeur (Ctrl+Shift+D)" aria-label="Mode développeur">🛠</button>
+    <button type="button" class="btn btn-ghost" id="headerSyncBtn" onclick="forceSyncNow()" title="Synchroniser" aria-label="Synchroniser">🔄</button>
+    <button type="button" class="btn btn-ghost" id="cinemaBtnHeader" onclick="toggleCinema()" title="Mode cinéma" aria-label="Mode cinéma">⊞</button>
+    <button type="button" class="btn btn-primary" id="headerNextBtn" onclick="loadNextVideoOrChapter()">Suivant →</button>
   </div>
 </header>
 
 <div class="search-wrap" id="searchBarArea">
   <span class="search-icon">🔍</span>
-  <input type="text" id="searchInput" placeholder="Rechercher dans tout le catalogue..." oninput="deepSearch()" />
-  <button class="btn btn-ghost" id="clearSearchBtn" style="display:none" onclick="clearSearch()">✕</button>
+  <input type="text" id="searchInput" placeholder="Rechercher dans tout le catalogue..." oninput="deepSearch()" autocomplete="off" />
+  <button type="button" class="btn btn-ghost" id="clearSearchBtn" style="display:none" onclick="clearSearch()" aria-label="Effacer la recherche">✕</button>
 </div>
 
 <div class="container">
@@ -56,10 +58,11 @@
     </div>
   </div>
   <div id="nextOverlay">
-    <button onclick="this.parentElement.style.display='none'" style="position:absolute;top:6px;right:10px;background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:16px;">✕</button>
+    <!-- Référence l'ID explicitement plutôt que this.parentElement pour résister aux changements de structure DOM -->
+    <button type="button" onclick="document.getElementById('nextOverlay').style.display='none'" style="position:absolute;top:6px;right:10px;background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:16px;" aria-label="Fermer">✕</button>
     <p>SUIVANT</p>
     <div class="next-title" id="nextTitle">—</div>
-    <button class="btn btn-primary" onclick="loadNextVideoOrChapter()">Regarder maintenant →</button>
+    <button type="button" class="btn btn-primary" onclick="loadNextVideoOrChapter()">Regarder maintenant →</button>
   </div>
 </div>
 
@@ -67,27 +70,27 @@
 <div class="dev-panel" id="devPanel">
   <div class="dev-panel-title">
     <span id="devPanelTitleText">🛠 Ajouter un chapitre</span>
-    <button class="btn-dev btn-dev-close" onclick="closeDevPanel()">✕</button>
+    <button type="button" class="btn-dev btn-dev-close" onclick="closeDevPanel()">✕</button>
   </div>
   <div class="dev-row">
-    <input type="text" class="dev-input-time" id="devTimeInput" placeholder="00:00" />
-    <button class="btn-dev btn-dev-grab" onclick="grabCurrentTime()" title="Prendre le timecode actuel">⏱️</button>
-    <input type="text" class="dev-input" id="devTitleInput" placeholder="Nom du chapitre (ex: Épisode 4 - Examen)" />
-    <button class="btn-dev btn-dev-add" onclick="addChapter()">+ Ajouter</button>
+    <input type="text" class="dev-input-time" id="devTimeInput" placeholder="00:00" autocomplete="off" />
+    <button type="button" class="btn-dev btn-dev-grab" onclick="grabCurrentTime()" title="Prendre le timecode actuel" aria-label="Prendre le timecode actuel">⏱️</button>
+    <input type="text" class="dev-input" id="devTitleInput" placeholder="Nom du chapitre (ex: Épisode 4 - Examen)" autocomplete="off" />
+    <button type="button" class="btn-dev btn-dev-add" onclick="addChapter()">+ Ajouter</button>
   </div>
   <div class="dev-chapter-list" id="devChapterList">
     <div style="color:var(--text-dim); font-size:11px; padding:12px; text-align:center;">Aucun chapitre ajouté</div>
   </div>
   <div class="dev-actions" style="flex-wrap:wrap;">
-    <button class="btn-dev btn-dev-export" onclick="exportDataJson()">📥 Exporter data.json</button>
-    <button class="btn-dev btn-dev-export" onclick="copyProgress()">📋 Copier progression</button>
-    <button class="btn-dev btn-dev-export" onclick="importProgress()">📥 Importer progression</button>
-    <button class="btn-dev btn-dev-close" onclick="clearDevChapters()">🗑 Effacer tout</button>
+    <button type="button" class="btn-dev btn-dev-export" onclick="exportDataJson()">📥 Exporter data.json</button>
+    <button type="button" class="btn-dev btn-dev-export" onclick="copyProgress()">📋 Copier progression</button>
+    <button type="button" class="btn-dev btn-dev-export" onclick="importProgress()">📥 Importer progression</button>
+    <button type="button" class="btn-dev btn-dev-close" onclick="clearDevChapters()">🗑 Effacer tout</button>
   </div>
   <div style="margin-top:12px;border-top:1px solid var(--border);padding-top:8px;">
     <div style="font-size:10px;color:var(--text-dim);margin-bottom:4px;display:flex;justify-content:space-between;">
       <span>📋 Logs sync</span>
-      <button class="btn-dev btn-dev-close" onclick="clearSyncLogs()" style="font-size:9px;padding:2px 6px;">Effacer</button>
+      <button type="button" class="btn-dev btn-dev-close" onclick="clearSyncLogs()" style="font-size:9px;padding:2px 6px;">Effacer</button>
     </div>
     <div id="syncLogs" style="font-size:9px;color:var(--text-dim);max-height:150px;overflow-y:auto;background:var(--bg3);padding:6px;border-radius:4px;font-family:monospace;"></div>
   </div>
@@ -98,11 +101,11 @@
     <h3>🔗 Lier un appareil</h3>
     <p style="font-size:10px;color:var(--text-dim);margin-bottom:8px;">Copie l'ID ci-dessous et envoie-le à ton autre appareil :</p>
     <p style="font-size:9px;color:var(--text);background:var(--bg3);padding:8px;border-radius:4px;word-break:break-all;user-select:all;margin-bottom:8px;" id="linkDeviceMyId"></p>
-    <button class="btn-dev btn-dev-export" onclick="copySyncId()" style="width:100%;margin-bottom:12px;">📋 Copier mon ID</button>
+    <button type="button" class="btn-dev btn-dev-export" onclick="copySyncId()" style="width:100%;margin-bottom:12px;">📋 Copier mon ID</button>
     <div style="color:var(--text-dim);font-size:11px;margin:8px 0;">— ou entre l'ID d'un autre appareil —</div>
-    <input type="text" id="linkDeviceIdInput" placeholder="sv_..." class="dev-input" style="width:100%;font-size:10px;margin-bottom:8px;" />
-    <button class="btn btn-primary" onclick="linkById()" style="width:100%;margin-bottom:8px;">🔗 Lier avec cet ID</button>
-    <button class="btn btn-ghost" onclick="closeLinkDeviceMenu()" style="width:100%;">✕ Fermer</button>
+    <input type="text" id="linkDeviceIdInput" placeholder="sv_..." class="dev-input" style="width:100%;font-size:10px;margin-bottom:8px;" autocomplete="off" />
+    <button type="button" class="btn btn-primary" onclick="linkById()" style="width:100%;margin-bottom:8px;">🔗 Lier avec cet ID</button>
+    <button type="button" class="btn btn-ghost" onclick="closeLinkDeviceMenu()" style="width:100%;">✕ Fermer</button>
   </div>
 </div>
 
@@ -110,19 +113,19 @@
   <div class="watch-modal" id="watchModal">
     <div id="watchMenu">
       <h3>👥 Watch Together</h3>
-      <button class="btn btn-primary" onclick="hostWatchSession()" style="width:100%;margin-bottom:12px;">🎬 Créer une session</button>
+      <button type="button" class="btn btn-primary" onclick="hostWatchSession()" style="width:100%;margin-bottom:12px;">🎬 Créer une session</button>
       <div style="color:var(--text-dim);font-size:11px;margin:8px 0;">Ou rejoindre une session</div>
-      <input type="text" class="watch-input" id="watchCodeInput" placeholder="ABC123" maxlength="6" style="text-transform:uppercase;" />
-      <button class="btn btn-ghost" onclick="joinWatchSession()" style="width:100%;">🔗 Rejoindre</button>
-      <button class="btn btn-ghost" onclick="closeWatchMenu()" style="width:100%;margin-top:8px;">✕ Fermer</button>
+      <input type="text" class="watch-input" id="watchCodeInput" placeholder="ABC123" maxlength="6" style="text-transform:uppercase;" autocomplete="off" />
+      <button type="button" class="btn btn-ghost" onclick="joinWatchSession()" style="width:100%;">🔗 Rejoindre</button>
+      <button type="button" class="btn btn-ghost" onclick="closeWatchMenu()" style="width:100%;margin-top:8px;">✕ Fermer</button>
     </div>
     <div id="watchHosting" style="display:none;">
       <h3>🎬 Session créée</h3>
       <div class="watch-code" id="watchCodeDisplay">------</div>
       <p style="font-size:12px;color:var(--text-dim);">Partage ce code avec tes potes</p>
-      <button class="btn btn-ghost" onclick="copyWatchCode()" style="width:100%;margin:8px 0;">📋 Copier le code</button>
-      <button class="btn btn-ghost" onclick="closeWatchMenu()" style="width:100%;margin-bottom:8px;">✕ Fermer le menu</button>
-      <button class="btn btn-primary" onclick="stopWatchSession()" style="width:100%;">⏹ Arrêter la session</button>
+      <button type="button" class="btn btn-ghost" onclick="copyWatchCode()" style="width:100%;margin:8px 0;">📋 Copier le code</button>
+      <button type="button" class="btn btn-ghost" onclick="closeWatchMenu()" style="width:100%;margin-bottom:8px;">✕ Fermer le menu</button>
+      <button type="button" class="btn btn-primary" onclick="stopWatchSession()" style="width:100%;">⏹ Arrêter la session</button>
     </div>
     <div id="watchGuest" style="display:none;">
       <h3>🔗 Connecté</h3>
@@ -135,14 +138,15 @@
         </label>
         <p style="font-size:9px;color:var(--text-dim);margin:4px 0 0 24px;">Activé = plus précis sur desktop<br>Désactivé = plus stable sur mobile</p>
       </div>
-      <button class="btn btn-ghost" onclick="closeWatchMenu()" style="width:100%;margin-top:8px;">✕ Fermer le menu</button>
-      <button class="btn btn-primary" onclick="leaveWatchSession()" style="width:100%;margin-top:4px;">🚪 Quitter la session</button>
+      <button type="button" class="btn btn-ghost" onclick="closeWatchMenu()" style="width:100%;margin-top:8px;">✕ Fermer le menu</button>
+      <button type="button" class="btn btn-primary" onclick="leaveWatchSession()" style="width:100%;margin-top:4px;">🚪 Quitter la session</button>
     </div>
   </div>
 </div>
 
 <div class="watch-host-badge" id="watchHostBadge">👥 HÔTE</div>
-
+<script src="https://cdn.embed.ly/player-0.1.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/utils.js"></script>
 <script src="js/supabase.js"></script>
 <script src="js/database.js"></script>

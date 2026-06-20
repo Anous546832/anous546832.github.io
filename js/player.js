@@ -4,9 +4,36 @@ let player = null;
 let cinemaMode = false;
 let currentChapterIndex = 0, chapterDropdownOpen = false;
 let lastTimecodeSave = {}, lastTimecodeValue = {};
-let inactivityPoints = []; // [{ timecode: 1234, timestamp: ... }]
+let inactivityPoints = [];
 let lastInteraction = Date.now();
 let lastInactivitySave = 0;
+
+// ─── Escape HTML ─────────────────────────────────────────────────────────────
+function _escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ─── Buffer timecodes ─────────────────────────────────────────────────────────
+// Évite un JSON.parse + JSON.stringify sur chaque timeupdate (~4×/sec).
+// Les écritures localStorage sont limitées à 1 toutes les 5s pendant la lecture ;
+// les événements importants (ended, page masquée, chargement vidéo) forcent un flush immédiat.
+let _tcBuf = null;
+let _lastTcWrite = 0;
+const TC_WRITE_INTERVAL = 5000;
+
+function _loadTcBuf() {
+  if (!_tcBuf) _tcBuf = JSON.parse(localStorage.getItem(TIMECODE_KEY)) || {};
+  return _tcBuf;
+}
+function _flushTc() {
+  if (_tcBuf) {
+    localStorage.setItem(TIMECODE_KEY, JSON.stringify(_tcBuf));
+    _lastTcWrite = Date.now();
+  }
+}
+
+document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") _flushTc(); });
+window.addEventListener("beforeunload", _flushTc);
 
 // ─── Chapitres ───────────────────────────────────────────────────────────────
 function getChapters(video) {
@@ -63,12 +90,13 @@ function updateChapterDisplay(chapter, chapters) {
 }
 function buildChapterDropdown(chapters) {
   const watched = getWatched();
+  // ch.id peut être absent sur les chapitres devmode → fallback sur ch.start comme clé
   document.getElementById("chapterDropdown").innerHTML = `
     <div class="chapter-dropdown-header"><span>${chapters.length} chapitres</span></div>
     <div class="chapter-dropdown-scroll">${chapters.map((ch, i) => `
       <div class="chapter-item ${i === currentChapterIndex ? 'current' : ''}" data-chapter-index="${i}" onclick="skipToChapter(${i})">
-        <div class="chapter-item-num">${i + 1}</div><div class="chapter-item-info"><div class="chapter-item-title">${ch.title}</div><div class="chapter-item-time">${ch.start > 0 ? formatSeconds(ch.start) : 'Début'}</div></div>
-        <span class="chapter-item-status">${watched.includes(currentVideo.id + '_ch_' + ch.id) ? '✓' : ''}</span>
+        <div class="chapter-item-num">${i + 1}</div><div class="chapter-item-info"><div class="chapter-item-title">${_escHtml(ch.title)}</div><div class="chapter-item-time">${ch.start > 0 ? formatSeconds(ch.start) : 'Début'}</div></div>
+        <span class="chapter-item-status">${watched.includes(currentVideo.id + '_ch_' + (ch.id ?? ch.start)) ? '✓' : ''}</span>
       </div>`).join('')}</div>`;
 }
 function updateChapterDropdownHighlight(index) {
@@ -76,11 +104,15 @@ function updateChapterDropdownHighlight(index) {
 }
 
 // ─── Timecode ────────────────────────────────────────────────────────────────
-function saveTimecode(id, value) {
+// immediate=true : écrit localStorage maintenant (actions utilisateur, ended, etc.)
+// immediate=false : throttle à TC_WRITE_INTERVAL (appelé depuis timeupdate)
+function saveTimecode(id, value, immediate = true) {
   const sec = typeof value === 'string' ? parseTimeToSeconds(value) : value;
-  const t = getTimecodes(); t[id] = sec;
-  localStorage.setItem(TIMECODE_KEY, JSON.stringify(t));
+  _loadTcBuf()[id] = sec;
+
   const now = Date.now();
+  if (immediate || now - _lastTcWrite >= TC_WRITE_INTERVAL) _flushTc();
+
   if (!lastTimecodeSave[id] || now - lastTimecodeSave[id] >= 20000) {
     if (lastTimecodeValue[id] !== sec) { lastTimecodeSave[id] = now; lastTimecodeValue[id] = sec; saveWithSync(); }
   }
@@ -88,8 +120,13 @@ function saveTimecode(id, value) {
 function toggleWatched(id, e) {
   e.stopPropagation();
   let w = getWatched();
-  if (w.includes(id)) w = w.filter(i => i !== id);
-  else { w.push(id); const t = getTimecodes(); delete t[id]; localStorage.setItem(TIMECODE_KEY, JSON.stringify(t)); }
+  if (w.includes(id)) w = w.filter(wId => wId !== id);
+  else {
+    w.push(id);
+    // Supprime le timecode de la vidéo du buffer mémoire puis flush immédiatement
+    delete _loadTcBuf()[id];
+    _flushTc();
+  }
   localStorage.setItem(WATCHED_KEY, JSON.stringify(w));
   saveWithSync(); skipAutoScroll = true; render();
 }
@@ -97,6 +134,7 @@ function toggleWatched(id, e) {
 // ─── Lecture vidéo ───────────────────────────────────────────────────────────
 function loadVideo(v, chapterIndex = 0) {
   if (!v) return;
+  _flushTc(); // persiste le timecode de la vidéo précédente avant de changer
   document.getElementById("nextOverlay").style.display = "none";
   currentVideo = v; currentCreator = creator; currentCategory = category; currentChapterIndex = chapterIndex;
   inactivityPoints = [];
@@ -114,19 +152,21 @@ function loadVideo(v, chapterIndex = 0) {
   const url = `https://cdn.embedly.com/widgets/media.html?src=https%3A%2F%2Fstreamable.com%2Fe%2F${v.id}&display_name=Streamable&url=${encodeURIComponent("https://streamable.com/"+v.id)}&key=96a16496e36611e091d14040d3dc5c07&type=text%2Fhtml&schema=streamable`;
   document.getElementById("videoArea").innerHTML = `<iframe id="main-player" src="${url}" allowfullscreen scrolling="no"></iframe>`;
   player = new playerjs.Player(document.getElementById("main-player"));
-  player.setLoop(false);
 
   player.on('ready', () => {
-    const saved = getTimecodes()[v.id];
+    player.setLoop(false); // doit être appelé après ready (API playerjs)
+
+    const saved = _loadTcBuf()[v.id];
     const targetTime = (chapterIndex > 0 && chapter.start > 0) ? chapter.start : (saved || 0);
     if (targetTime > 0) player.setCurrentTime(targetTime);
 
     player.on('pause', () => { if (isWatchHost && watchChannel && currentVideo) sendWatchEvent(true); });
-    player.on('play', () => { if (isWatchHost && watchChannel && currentVideo) sendWatchEvent(false); });
+    player.on('play',  () => { if (isWatchHost && watchChannel && currentVideo) sendWatchEvent(false); });
 
     player.on('timeupdate', res => {
       if (res.seconds > 0) {
-        saveTimecode(v.id, res.seconds);
+        saveTimecode(v.id, res.seconds, false); // false = throttlé, pas d'écriture à chaque tick
+
         const now = Date.now();
         if (now - lastInteraction > 1200000 && now - lastInactivitySave > 1200000) {
           inactivityPoints.push({ timecode: Math.floor(res.seconds), timestamp: now });
@@ -138,15 +178,21 @@ function loadVideo(v, chapterIndex = 0) {
         if (newIdx !== currentChapterIndex) { currentChapterIndex = newIdx; updateChapterDisplay(chapters[newIdx], chapters); updateChapterDropdownHighlight(newIdx); }
       }
     });
-    player.on('ended', () => { saveTimecode(v.id, 0); showNextOverlay(); });
+
+    player.on('ended', () => {
+      _flushTc(); // flush avant de remettre à 0 pour ne pas perdre la position max atteinte
+      saveTimecode(v.id, 0);
+      showNextOverlay();
+    });
   });
+
   checkNextVideoOrChapter(); render();
   if (window.innerWidth <= 768 && !cinemaMode) toggleCinema();
   if (devMode) openDevPanel();
 }
 
 function sendWatchEvent(isPaused) {
-  const tc = getTimecodes()[currentVideo.id] || 0;
+  const tc = _loadTcBuf()[currentVideo.id] || 0;
   watchChannel.send({ type: 'broadcast', event: 'sync', payload: { timecode: Math.floor(tc), videoId: currentVideo.id, sentAt: Date.now(), isPaused } });
 }
 
@@ -157,10 +203,14 @@ function getNextChapterOrVideo() {
   const vidIdx = vids.findIndex(v => v.id === currentVideo.id);
   if (vidIdx !== -1 && vidIdx < vids.length - 1) return { type: 'video', video: vids[vidIdx + 1], chapterIndex: 0 };
   const chapters = getChapters(currentVideo);
-  const timecodes = getTimecodes();
-  const currentIdx = findCurrentChapterIndex(timecodes[currentVideo.id] || 0, chapters);
+  const currentIdx = findCurrentChapterIndex(_loadTcBuf()[currentVideo.id] || 0, chapters);
   if (currentIdx < chapters.length - 1) return { type: 'chapter', video: currentVideo, chapterIndex: currentIdx + 1, chapter: chapters[currentIdx + 1] };
   return null;
+}
+function loadNextVideoOrChapter() {
+  const next = getNextChapterOrVideo();
+  if (!next) return;
+  loadVideo(next.video, next.chapterIndex);
 }
 function checkNextVideoOrChapter() {
   const btn = document.getElementById("headerNextBtn"), overlay = document.getElementById("nextOverlay");
@@ -171,52 +221,43 @@ function checkNextVideoOrChapter() {
 }
 function showNextOverlay() {
   const overlay = document.getElementById("nextOverlay");
-  if (!currentVideo || !currentCreator || !currentCategory) {
-    overlay.style.display = "none";
-    return;
-  }
-  
+  if (!currentVideo || !currentCreator || !currentCategory) { overlay.style.display = "none"; return; }
+
   const vids = data[currentCreator].categories[currentCategory].videos;
   const idx = vids.findIndex(v => v.id === currentVideo.id);
-  
+
   if (idx !== -1 && idx < vids.length - 1) {
     const nextVideo = vids[idx + 1];
     const hasPoints = inactivityPoints.length > 0;
-    
+
     document.getElementById("nextTitle").textContent = nextVideo.title;
-    document.getElementById("nextOverlay").querySelector("p").textContent = "ÉPISODE SUIVANT";
-    
-    // Supprimer l'ancien select s'il existe
-    const oldSelect = document.getElementById("inactivitySelect");
-    if (oldSelect) oldSelect.remove();
-    
-    // Supprimer l'ancien bouton s'il existe
-    const oldBtn = document.getElementById("resumeInactivityBtn");
-    if (oldBtn) oldBtn.remove();
-    
+    // overlay est déjà la référence, pas besoin de getElementById une seconde fois
+    const pEl = overlay.querySelector("p");
+    if (pEl) pEl.textContent = "ÉPISODE SUIVANT";
+
+    // Nettoie les éléments inactivité de la session précédente
+    document.getElementById("inactivitySelect")?.remove();
+    document.getElementById("resumeInactivityBtn")?.remove();
+
     if (hasPoints) {
       const select = document.createElement("select");
       select.id = "inactivitySelect";
       select.style.cssText = "width:100%;margin-bottom:8px;background:var(--bg3);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:6px;font-size:11px;font-family:var(--font-body);box-sizing:border-box;";
-      select.innerHTML = `
-        <option value="">💤 Moments d'inactivité</option>
-        ${inactivityPoints.slice().reverse().map(p => `
-          <option value="${p.timecode}">${formatSeconds(p.timecode)}</option>
-        `).join('')}
-      `;
-      
+      select.innerHTML = `<option value="">💤 Moments d'inactivité</option>
+        ${inactivityPoints.slice().reverse().map(p => `<option value="${p.timecode}">${formatSeconds(p.timecode)}</option>`).join('')}`;
+
       const btn = document.createElement("button");
       btn.id = "resumeInactivityBtn";
       btn.className = "btn btn-ghost";
-      btn.style.width = "100%";
-      btn.style.marginBottom = "4px";
+      btn.style.cssText = "width:100%;margin-bottom:4px;";
       btn.textContent = "↩ Reprendre au point sélectionné";
       btn.onclick = resumeFromInactivity;
-      
-      overlay.insertBefore(btn, overlay.querySelector(".btn-primary"));
-      overlay.insertBefore(select, overlay.querySelector(".btn-primary"));
+
+      const primaryBtn = overlay.querySelector(".btn-primary");
+      overlay.insertBefore(btn, primaryBtn);
+      overlay.insertBefore(select, primaryBtn);
     }
-    
+
     overlay.style.display = "block";
   } else {
     overlay.style.display = "none";
@@ -226,10 +267,8 @@ function showNextOverlay() {
 function resumeFromInactivity() {
   const select = document.getElementById("inactivitySelect");
   if (!select || !select.value) return;
-  
   const timecode = parseInt(select.value);
   document.getElementById("nextOverlay").style.display = "none";
-  
   if (player && currentVideo) {
     player.setCurrentTime(timecode);
     player.play();
