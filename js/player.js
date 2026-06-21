@@ -210,6 +210,15 @@ function getNextChapterOrVideo() {
 function loadNextVideoOrChapter() {
   const next = getNextChapterOrVideo();
   if (!next) return;
+  if (next.type === 'video' && currentVideo) {
+    const w = getWatched();
+    if (!w.includes(currentVideo.id)) {
+      w.push(currentVideo.id);
+      delete _loadTcBuf()[currentVideo.id];
+      localStorage.setItem(WATCHED_KEY, JSON.stringify(w));
+      saveWithSync();
+    }
+  }
   loadVideo(next.video, next.chapterIndex);
 }
 function checkNextVideoOrChapter() {

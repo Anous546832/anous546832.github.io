@@ -220,6 +220,13 @@ function importProgress() {
       if (hasResume)    localStorage.setItem(RESUME_KEY,   JSON.stringify(progress.resume));
       if (hasWatched)   localStorage.setItem(WATCHED_KEY,  JSON.stringify(progress.watched));
       if (hasTimecodes) localStorage.setItem(TIMECODE_KEY, JSON.stringify(progress.timecodes));
+      // Neutralise le buffer mémoire du player : _flushTc() en beforeunload ne peut plus écraser les timecodes importés
+      _tcBuf = null;
+      // Empêche _flushSync() en beforeunload de pousser les anciennes données vers Supabase
+      hasDirtyChanges = false;
+      if (pendingSync) { clearTimeout(pendingSync); pendingSync = null; }
+      // Marque le local comme modifié pour que bootSync ne l'écrase pas avec les anciennes données cloud
+      localStorage.setItem(LS_LOCAL_UPDATED, Date.now().toString());
       alert("✅ Progression importée ! Rechargement...");
       location.reload();
     }
