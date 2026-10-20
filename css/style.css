@@ -288,6 +288,66 @@ header {
 
 #headerNextBtn { display: none; }
 
+/* ── Menu du header (regroupe synchro / appareils / watch / dev) ─────── */
+.icon-btn { min-width: 36px; padding: 7px 10px; font-size: 15px; line-height: 1; }
+.menu-wrap { position: relative; }
+#menuBtn { position: relative; }
+
+.sync-dot {
+  position: absolute; top: 3px; right: 3px;
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--text-dim); border: 1.5px solid var(--bg);
+}
+.sync-dot.inline { position: static; flex-shrink: 0; border: none; }
+.sync-dot[data-state="ok"]      { background: #3ecf8e; }
+.sync-dot[data-state="syncing"] { background: #f5a524; animation: syncPulse 1s ease-in-out infinite; }
+.sync-dot[data-state="error"]   { background: var(--red); }
+@keyframes syncPulse { 50% { opacity: 0.35; } }
+
+.app-menu {
+  display: none;
+  position: absolute; top: calc(100% + 8px); right: 0;
+  width: 270px; padding: 6px;
+  background: var(--bg2); border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 12px; box-shadow: 0 16px 48px rgba(0,0,0,0.6);
+  z-index: 2000;
+}
+.app-menu.active { display: block; animation: menuIn 0.15s ease; }
+@keyframes menuIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+.app-menu-status {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 10px 10px; font-size: 11px; color: var(--text-dim);
+  border-bottom: 1px solid var(--border); margin-bottom: 4px;
+}
+.app-menu button {
+  display: flex; align-items: center; gap: 12px; width: 100%;
+  padding: 9px 10px; background: none; border: none; border-radius: 8px;
+  color: var(--text); font-family: var(--font-body); text-align: left; cursor: pointer;
+  transition: background var(--transition);
+}
+.app-menu button:hover, .app-menu button:focus-visible { background: var(--bg3); outline: none; }
+.app-menu .mi-icon { font-size: 17px; width: 22px; text-align: center; flex-shrink: 0; }
+.app-menu .mi-text { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.app-menu .mi-text b { font-size: 13px; font-weight: 500; }
+.app-menu .mi-text small { font-size: 10.5px; color: var(--text-dim); }
+.app-menu-sep { height: 1px; background: var(--border); margin: 4px 6px; }
+
+/* ── Notifications discrètes (remplacent les alert()) ────────────────── */
+#toastBox {
+  position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%);
+  display: flex; flex-direction: column; gap: 8px; align-items: center;
+  z-index: 5000; pointer-events: none; width: max-content; max-width: calc(100vw - 32px);
+}
+.toast {
+  padding: 10px 16px; border-radius: 10px; font-size: 12.5px;
+  background: var(--bg2); color: var(--text); border: 1px solid rgba(255,255,255,0.12);
+  box-shadow: 0 8px 30px rgba(0,0,0,0.5);
+  opacity: 0; transform: translateY(8px); transition: all 0.25s ease;
+}
+.toast.show { opacity: 1; transform: none; }
+.toast-ok    { border-left: 3px solid #3ecf8e; }
+.toast-error { border-left: 3px solid var(--red); }
+
 /* ═══════════════════════════════════════════
    SEARCH BAR
 ═══════════════════════════════════════════ */
@@ -941,13 +1001,9 @@ header {
     padding: 0;
     font-size: 14px;
   }
-  #devModeBtn, #watchBtn {
-    min-width: auto;
-    width: auto;
-    height: 30px;
-    font-size: 10px;
-    padding: 6px 8px;
-  }
+  #menuBtn { min-width: 30px; width: 30px; height: 30px; padding: 0; font-size: 15px; }
+  .menu-wrap { position: static; }
+  .app-menu { left: 8px; right: 8px; width: auto; top: calc(100% + 4px); }
   #headerNextBtn {
     height: 30px;
     padding: 6px 10px;

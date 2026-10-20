@@ -318,7 +318,7 @@ function createVideoElement(v, catData, watched, timecodes, resume) {
     if (colors.length > 1) nextArcDot = `<span style="display:inline-flex;align-items:center;gap:3px;margin-left:5px;font-size:9px;color:${colors[1].color};opacity:0.7;" title="${colors[1].title} (débute à l'épisode ${colors[1].startEp})"><span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:${colors[1].color};box-shadow:0 0 5px ${colors[1].color}66;"></span>ép.${colors[1].startEp}</span>`;
   }
   el.innerHTML = `<div class="item-left"><div class="item-icon">${isCurrent?'▶':isW?'✓':'·'}</div><div><div class="item-title">${v.title}${nextArcDot}</div>${chapterCount?`<div class="search-result-sub">${chapterCount} chapitres</div>`:''}</div></div>
-    <div class="item-right"><input type="text" class="time-input" placeholder="${isW?'✓':'—'}" value="${isW?'':displayTime}" onclick="event.stopPropagation()" onblur="saveTimecode('${v.id}', this.value)" ${isW?'disabled':''} style="${isW?'opacity:0.4;pointer-events:none;':''}"><div class="status-icon" title="${isW?'Marquer non vu':'Marquer vu'}">${isW?'✓':'+'}</div></div>`;
+    <div class="item-right"><input type="text" class="time-input" placeholder="${isW?'✓':'—'}" value="${isW?'':displayTime}" onclick="event.stopPropagation()" onblur="commitTimecodeInput('${v.id}', this.value)" ${isW?'disabled':''} style="${isW?'opacity:0.4;pointer-events:none;':''}"><div class="status-icon" title="${isW?'Marquer non vu':'Marquer vu'}">${isW?'✓':'+'}</div></div>`;
   el.onclick = () => loadVideo(v);
   el.querySelector('.status-icon').onclick = (e) => toggleWatched(v.id, e);
   return el;
@@ -327,11 +327,13 @@ function deleteFromResume(key) {
   const r = getResume();
   delete r[key];
   localStorage.setItem(RESUME_KEY, JSON.stringify(r));
+  saveWithSync();
 }
 function unmarkAllInCategory() {
   if (!confirm("Réinitialiser les épisodes vus de cette série ?")) return;
   const ids = new Set(data[creator].categories[category].videos.map(v => v.id));
   const w = getWatched().filter(id => !ids.has(id));
   localStorage.setItem(WATCHED_KEY, JSON.stringify(w));
+  saveWithSync();
   render();
 }

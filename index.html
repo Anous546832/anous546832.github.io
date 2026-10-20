@@ -28,11 +28,18 @@
     <div class="chapter-dropdown" id="chapterDropdown"></div>
   </div>
   <div class="header-actions">
-    <button type="button" class="btn btn-ghost" id="watchBtn" onclick="startWatchMenu()" title="Watch Together" aria-label="Watch Together">👥</button>
-    <button type="button" class="btn btn-ghost" id="linkDeviceBtn" onclick="openLinkDeviceMenu()" title="Lier un appareil" aria-label="Lier un appareil">🔗</button>
-    <button type="button" class="btn btn-ghost" id="devModeBtn" onclick="toggleDevMode()" title="Mode développeur (Ctrl+Shift+D)" aria-label="Mode développeur">🛠</button>
-    <button type="button" class="btn btn-ghost" id="headerSyncBtn" onclick="forceSyncNow()" title="Synchroniser" aria-label="Synchroniser">🔄</button>
-    <button type="button" class="btn btn-ghost" id="cinemaBtnHeader" onclick="toggleCinema()" title="Mode cinéma" aria-label="Mode cinéma">⊞</button>
+    <div class="menu-wrap">
+      <button type="button" class="btn btn-ghost icon-btn" id="menuBtn" onclick="toggleAppMenu(event)" aria-haspopup="true" aria-expanded="false" title="Menu : synchro, appareils, watch together…" aria-label="Menu">☰<span class="sync-dot" id="syncDot" data-state="idle"></span></button>
+      <div class="app-menu" id="appMenu" role="menu">
+        <div class="app-menu-status"><span class="sync-dot inline" id="syncDotMenu" data-state="idle"></span><span id="syncMenuStatus">Synchronisation…</span></div>
+        <button type="button" role="menuitem" onclick="menuAction(forceSyncNow)"><span class="mi-icon">🔄</span><span class="mi-text"><b>Synchroniser maintenant</b><small>Envoyer et récupérer ta progression</small></span></button>
+        <button type="button" role="menuitem" onclick="menuAction(startWatchMenu)"><span class="mi-icon">👥</span><span class="mi-text"><b>Regarder à plusieurs</b><small>Créer ou rejoindre une session</small></span></button>
+        <button type="button" role="menuitem" onclick="menuAction(openLinkDeviceMenu)"><span class="mi-icon">🔗</span><span class="mi-text"><b>Lier un appareil</b><small>Retrouver ta progression PC ↔ téléphone</small></span></button>
+        <div class="app-menu-sep"></div>
+        <button type="button" role="menuitem" onclick="menuAction(toggleDevMode)"><span class="mi-icon">🛠</span><span class="mi-text"><b>Mode développeur</b><small>Ajouter des chapitres · Ctrl+Maj+D</small></span></button>
+      </div>
+    </div>
+    <button type="button" class="btn btn-ghost icon-btn" id="cinemaBtnHeader" onclick="toggleCinema()" title="Mode cinéma : masquer la liste" aria-label="Mode cinéma">⊞</button>
     <button type="button" class="btn btn-primary" id="headerNextBtn" onclick="loadNextVideoOrChapter()">Suivant →</button>
   </div>
 </header>

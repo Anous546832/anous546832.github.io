@@ -64,6 +64,9 @@ let _retryN     = 0;
 let _busy       = false;
 let _queued     = false;
 let _rtChannel  = null;
+let _remoteStamp  = null;    // updated_at de la ligne cloud telle que lue (verrou optimiste)
+let _remoteExists = null;    // true / false une fois la ligne lue, null tant qu'inconnu
+let _lastSyncOk   = 0;
 
 // Watch Together
 let supabaseWatch     = null;
@@ -204,7 +207,48 @@ function _put(section, key, value) {
 let _samp = { videoId: null, last: null, at: 0, pending: null, pendingAt: 0 };
 
 function _resetSampler(videoId, knownValue) {
-  _samp = { videoId, last: knownValue ?? null, at: Date.now(), pending: null, pendingAt: 0 };
+  _samp = { videoId, last: knownValue ?? null, at: Date.now(), pending: null, pendingAt: 0, hold: null };
+}
+
+/** L'appli change de video : l'echantillonneur repart de la valeur du document */
+function svVideoChanged(videoId) {
+  _resetSampler(videoId, _loadDoc().timecodes[videoId]?.v ?? null);
+}
+
+/**
+ * Ecriture VOLONTAIRE d'un timecode (saisie manuelle, saut de chapitre, fin
+ * d'episode, episode marque vu). Passe par le document, donc ne peut plus etre
+ * ecrasee par la projection. sec null/0 = effacer la position.
+ * hold : fin d'episode -> on ne reenregistre pas la position finale du player.
+ */
+function svSetTimecode(videoId, sec, { hold = false } = {}) {
+  const val = (sec == null || !isFinite(sec) || sec <= 0) ? null : Math.floor(sec);
+  _absorbNativeChanges();   // _project() reecrit les cles natives : on integre d'abord les changements en attente
+  if (_put("timecodes", videoId, val)) { _project(); _schedulePush(); }
+  if (typeof currentVideo !== "undefined" && currentVideo && currentVideo.id === videoId) {
+    if (hold) { _resetSampler(videoId, null); _samp.hold = { pos: null }; }
+    else      _resetSampler(videoId, val);
+  }
+}
+
+/** Remplace toute la progression par celle fournie (import) : tout passe par le document */
+function svReplaceProgress({ resume, watched, timecodes }) {
+  const d = _loadDoc();
+  if (timecodes) {
+    Object.keys(d.timecodes).forEach(id => { if (!(id in timecodes)) _put("timecodes", id, null); });
+    Object.keys(timecodes).forEach(id => _put("timecodes", id, timecodes[id]));
+  }
+  if (watched) {
+    const w = new Set(watched);
+    Object.keys(d.watched).forEach(id => { if (d.watched[id].v && !w.has(id)) _put("watched", id, false); });
+    w.forEach(id => _put("watched", id, true));
+  }
+  if (resume) {
+    Object.keys(d.resume).forEach(k => { if (!(k in resume)) _put("resume", k, null); });
+    Object.keys(resume).forEach(k => _put("resume", k, resume[k]));
+  }
+  _project();
+  return syncNow({ silent: true });
 }
 
 async function _sampleTick() {
@@ -225,6 +269,14 @@ async function _sampleTick() {
     if (pos == null || !isFinite(pos) || pos < 0) return;
 
     const now     = Date.now();
+
+    // ── Fin d'episode : on ignore la position finale tant qu'elle ne bouge pas ──
+    if (_samp.hold) {
+      if (_samp.hold.pos == null) { _samp.hold.pos = pos; return; }
+      if (Math.abs(pos - _samp.hold.pos) <= DRIFT_TOLERANCE) return;
+      _resetSampler(id, null);            // relecture / saut : on repart proprement
+      return;
+    }
     const elapsed = (now - _samp.at) / 1000;
 
     // ── Cas 1 : lecture continue ────────────────────────────────────────────
@@ -293,6 +345,7 @@ function _commitTimecode(videoId, pos, isSeek) {
   if (cur != null && !isSeek && Math.abs(val - cur) < MIN_DELTA) return;
   if (cur === val) return;
 
+  _absorbNativeChanges();   // idem : ne jamais ecraser un "vu"/une reprise pas encore integres
   if (_put("timecodes", videoId, val)) {
     _project();
     _schedulePush();
@@ -352,7 +405,15 @@ const RESOLVE = {
   // "vu" l'emporte sur "pas vu" : on ne perd pas un episode marque.
   watched:   (a, b) => (a.v || b.v),
   // Depart deterministe, identique sur les deux appareils.
-  resume:    (a, b) => (_canon(a.v) >= _canon(b.v) ? a.v : b.v)
+  // La reprise la plus RECENTE (champ time) l'emporte ; on ne supprime jamais
+  // une reprise qui a ete jouee de l'autre cote.
+  resume:    (a, b) => {
+    if (a.v == null) return b.v;
+    if (b.v == null) return a.v;
+    const ta = Number(a.v.time) || 0, tb = Number(b.v.time) || 0;
+    if (ta !== tb) return ta > tb ? a.v : b.v;
+    return _canon(a.v) >= _canon(b.v) ? a.v : b.v;
+  }
 };
 
 function _mergeSection(section, local, remote) {
@@ -424,22 +485,60 @@ const _headers = {
   "Content-Type":  "application/json"
 };
 
-async function _fetchRemote() {
+/** Lit la ligne cloud ({data, updated_at}) ou null si elle n'existe pas encore */
+async function _fetchRow() {
   const res = await fetch(
-    `${SUPABASE_URL}/rest/v1/progress?id=eq.${encodeURIComponent(syncId)}&select=data`,
+    `${SUPABASE_URL}/rest/v1/progress?id=eq.${encodeURIComponent(syncId)}&select=data,updated_at`,
     { headers: _headers, cache: "no-store" }
   );
   if (!res.ok) throw new Error("HTTP " + res.status);
-  return (await res.json())?.[0]?.data || null;
+  return (await res.json())?.[0] || null;
 }
+async function _fetchRemote() { return (await _fetchRow())?.data || null; }
 
-async function _pushRemote(doc) {
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/progress`, {
-    method: "POST",
-    headers: { ..._headers, "Prefer": "resolution=merge-duplicates,return=minimal" },
-    body: JSON.stringify({ id: syncId, data: doc, updated_at: new Date().toISOString() })
-  });
+/**
+ * Envoi avec VERROU OPTIMISTE : l'ecriture n'est acceptee que si la ligne n'a
+ * pas change depuis notre lecture. Sinon un autre appareil a ecrit entre-temps :
+ * on renvoie { conflict:true } et syncNow relit / refusionne avant de reessayer.
+ * Avant : l'envoi ecrasait aveuglement la ligne et pouvait effacer a distance
+ * ce que l'autre appareil venait d'enregistrer.
+ * force : dernier recours (ecriture inconditionnelle de l'etat deja fusionne).
+ */
+async function _pushRemote(doc, { force = false } = {}) {
+  const now  = new Date().toISOString();
+  const body = JSON.stringify({ id: syncId, data: doc, updated_at: now });
+
+  if (force || _remoteExists === null || (_remoteExists && !_remoteStamp)) {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/progress?select=updated_at`, {
+      method: "POST",
+      headers: { ..._headers, "Prefer": "resolution=merge-duplicates,return=representation" },
+      body
+    });
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    const rows = await res.json().catch(() => []);
+    _remoteExists = true; _remoteStamp = rows?.[0]?.updated_at || null;
+    return { ok: true };
+  }
+
+  let res;
+  if (_remoteExists && _remoteStamp) {
+    res = await fetch(
+      `${SUPABASE_URL}/rest/v1/progress?id=eq.${encodeURIComponent(syncId)}&updated_at=eq.${encodeURIComponent(_remoteStamp)}&select=updated_at`,
+      { method: "PATCH", headers: { ..._headers, "Prefer": "return=representation" },
+        body: JSON.stringify({ data: doc, updated_at: now }) }
+    );
+  } else {
+    // La ligne n'existait pas : insertion simple (409 si quelqu'un l'a creee entre-temps)
+    res = await fetch(`${SUPABASE_URL}/rest/v1/progress?select=updated_at`, {
+      method: "POST", headers: { ..._headers, "Prefer": "return=representation" }, body
+    });
+    if (res.status === 409) return { conflict: true };
+  }
   if (!res.ok) throw new Error("HTTP " + res.status);
+  const rows = await res.json().catch(() => []);
+  if (!rows?.length) return { conflict: true };
+  _remoteExists = true; _remoteStamp = rows[0].updated_at || null;
+  return { ok: true };
 }
 
 
@@ -451,44 +550,55 @@ async function syncNow({ silent = true } = {}) {
   if (!supabaseReady || !syncId) return { ok: false, reason: "not-ready" };
   if (_busy) { _queued = true; return { ok: false, reason: "busy" }; }
   _busy = true;
+  _setSyncState("syncing");
 
   try {
     _absorbNativeChanges();
     const before = _canon(_loadDoc());
+    let merged = null, done = false;
 
-    // ── Lecture distante ──
-    let raw;
-    try { raw = await _fetchRemote(); }
-    catch(e) {
-      _scheduleRetry();
-      if (!silent) syncLog("❌ Lecture cloud impossible — nouvelle tentative programmee");
-      return { ok: false, reason: "read-failed", error: e.message };
-    }
+    // 3 tentatives : lecture -> fusion -> envoi verrouille. Un conflit signifie
+    // qu'un autre appareil a ecrit pendant ce temps : on relit et on refusionne.
+    for (let attempt = 0; attempt < 3 && !done; attempt++) {
+      let row;
+      try { row = await _fetchRow(); }
+      catch(e) {
+        _scheduleRetry(); _setSyncState("error");
+        if (!silent) syncLog("❌ Lecture cloud impossible — nouvelle tentative programmee");
+        return { ok: false, reason: "read-failed", error: e.message };
+      }
 
-    const remote = _normalizeRemote(raw);
-    const merged = _mergeDocs(_loadDoc(), remote);
+      _remoteExists = !!row;
+      _remoteStamp  = row ? row.updated_at : null;
+      const remote  = _normalizeRemote(row?.data || null);
 
-    _doc = merged;
-    _saveDoc();
-    _project();
+      merged = _mergeDocs(_loadDoc(), remote);
+      _doc = merged;
+      _saveDoc();
+      _project();
 
-    const changed = _canon(merged) !== before;
+      if (!_isDirty() && _canon(merged) === _canon(remote)) { done = true; break; }   // rien a envoyer
 
-    // ── Envoi si le distant n'a pas deja exactement l'etat fusionne ──
-    if (_isDirty() || _canon(merged) !== _canon(remote)) {
       try {
-        await _pushRemote(merged);
-        _clearDirty();
-        _retryN = 0;
+        const r = await _pushRemote(merged, { force: attempt === 2 });
+        if (r.ok) { _clearDirty(); done = true; }
       } catch(e) {
-        _scheduleRetry();
+        _scheduleRetry(); _setSyncState("error");
         if (!silent) syncLog("❌ Envoi cloud echoue — nouvelle tentative programmee");
         return { ok: false, reason: "push-failed", error: e.message };
       }
     }
 
-    _retryN = 0;
+    if (!done) {
+      _scheduleRetry(); _setSyncState("error");
+      return { ok: false, reason: "conflict" };
+    }
 
+    _retryN = 0;
+    _lastSyncOk = Date.now();
+    _setSyncState("ok");
+
+    const changed = _canon(_loadDoc()) !== before;
     if (changed) {
       _afterRemoteChange();
       _refreshUI();
@@ -542,18 +652,30 @@ function _scheduleRetry() {
   _retryTimer = setTimeout(() => { _retryTimer = null; syncNow({ silent: true }); }, delay);
 }
 
-/** Envoi de dernier recours : aboutit meme si la page se ferme */
+/**
+ * Envoi de dernier recours a la fermeture de la page. Verrouille par updated_at :
+ * si un autre appareil a ecrit depuis notre derniere lecture, l'envoi est refuse
+ * par le serveur et rien n'est ecrase. Le drapeau "dirty" reste pose, donc la
+ * prochaine ouverture fusionnera puis renverra proprement.
+ */
 function _flush() {
   if (!supabaseReady || !syncId) return;
   _flushSampler();
   _absorbNativeChanges();
-  if (!_isDirty()) return;
+  if (!_isDirty() || _remoteExists === null) return;
   try {
-    fetch(`${SUPABASE_URL}/rest/v1/progress`, {
-      method: "POST",
+    const body = JSON.stringify(_remoteExists
+      ? { data: _loadDoc(), updated_at: new Date().toISOString() }
+      : { id: syncId, data: _loadDoc(), updated_at: new Date().toISOString() });
+    const url = _remoteExists
+      ? `${SUPABASE_URL}/rest/v1/progress?id=eq.${encodeURIComponent(syncId)}&updated_at=eq.${encodeURIComponent(_remoteStamp || "")}`
+      : `${SUPABASE_URL}/rest/v1/progress`;
+    if (_remoteExists && !_remoteStamp) return;
+    fetch(url, {
+      method: _remoteExists ? "PATCH" : "POST",
       keepalive: true,
-      headers: { ..._headers, "Prefer": "resolution=merge-duplicates,return=minimal" },
-      body: JSON.stringify({ id: syncId, data: _loadDoc(), updated_at: new Date().toISOString() })
+      headers: { ..._headers, "Prefer": "return=minimal" },
+      body
     }).catch(() => {});
   } catch(e) { /* la page se ferme */ }
 }
@@ -576,19 +698,43 @@ function saveWithSync() {
 }
 
 async function forceSyncNow() {
-  if (!supabaseReady) { alert("⚠ Supabase non connecte"); return; }
+  if (!supabaseReady) { showToast("⚠ Cloud non connecte", "error"); return; }
   if (_pushTimer) { clearTimeout(_pushTimer); _pushTimer = null; }
   syncLog("🔄 Synchronisation en cours...");
 
   const r = await syncNow({ silent: false });
-  if (r.ok) {
-    alert(r.changed ? "✅ Synchronise !\nDes donnees ont ete mises a jour."
-                    : "✅ Tout est deja a jour.");
-  } else if (r.reason === "busy") {
-    alert("⏳ Une synchronisation est deja en cours.");
-  } else {
-    alert("❌ Synchronisation impossible.\nTes donnees locales sont intactes, une nouvelle tentative est programmee.");
-  }
+  if (r.ok)                     showToast(r.changed ? "Synchronise — donnees mises a jour" : "Tout est deja a jour", "ok");
+  else if (r.reason === "busy") showToast("Une synchronisation est deja en cours", "info");
+  else                          showToast("Synchro impossible — tes donnees locales sont intactes, nouvelle tentative auto", "error");
+}
+
+/* ─── Indicateur d'etat (pastille du menu) + notifications discretes ───────── */
+
+function _setSyncState(state) {
+  window.svSyncState = state;
+  ["syncDot", "syncDotMenu"].forEach(id => { const d = document.getElementById(id); if (d) d.dataset.state = state; });
+  const label = document.getElementById("syncMenuStatus");
+  if (label) label.textContent = syncStatusText();
+}
+
+function syncStatusText() {
+  const st = window.svSyncState;
+  if (st === "syncing") return "Synchronisation…";
+  if (st === "error")   return "Hors ligne — nouvelle tentative auto";
+  if (!_lastSyncOk)     return "Pas encore synchronise";
+  const m = Math.round((Date.now() - _lastSyncOk) / 60000);
+  return m < 1 ? "A jour (a l'instant)" : `A jour (il y a ${m} min)`;
+}
+
+function showToast(msg, kind = "info") {
+  let box = document.getElementById("toastBox");
+  if (!box) { box = document.createElement("div"); box.id = "toastBox"; document.body.appendChild(box); }
+  const t = document.createElement("div");
+  t.className = "toast toast-" + kind;
+  t.textContent = msg;
+  box.appendChild(t);
+  requestAnimationFrame(() => t.classList.add("show"));
+  setTimeout(() => { t.classList.remove("show"); setTimeout(() => t.remove(), 300); }, 3200);
 }
 
 /* ─── Diagnostic ──────────────────────────────────────────────────────────── */
@@ -688,9 +834,12 @@ try {
 _loadDoc();
 _project();
 
+let _bootResolve;
+window.svBootSync = new Promise(r => { _bootResolve = r; });
+
 (async function boot() {
-  if (!supabaseReady) return;
-  await syncNow({ silent: true });
+  if (!supabaseReady) { _bootResolve(); return; }
+  try { await syncNow({ silent: true }); } finally { _bootResolve(); }
 
   setInterval(_sampleTick, SAMPLE_MS);
 
@@ -736,7 +885,7 @@ function closeLinkDeviceMenu() {
 }
 function copySyncId() {
   navigator.clipboard.writeText(syncId)
-    .then(() => alert("📋 ID copie !"))
+    .then(() => showToast("ID copie dans le presse-papiers", "ok"))
     .catch(() => prompt("Copie manuelle :", syncId));
 }
 
@@ -754,8 +903,8 @@ async function linkById() {
     _markDirty();                              // force la republication sous le nouvel ID
     const r = await syncNow({ silent: false });
     closeLinkDeviceMenu();
-    if (r.ok) { alert("✅ Appareils lies et fusionnes !"); _refreshUI(); }
-    else      { alert("⚠ Lie, mais la synchro a echoue. Elle se fera automatiquement."); }
+    if (r.ok) { showToast("Appareils lies et fusionnes", "ok"); _refreshUI(); }
+    else      { showToast("Lie, mais la synchro a echoue — elle se refera automatiquement", "error"); }
   } catch(e) { alert("❌ Erreur: " + e.message); }
 }
 
@@ -765,7 +914,7 @@ async function linkById() {
    ═══════════════════════════════════════════════════════════════════════════ */
 
 function generateWatchCode() { return Math.random().toString(36).substring(2, 8).toUpperCase(); }
-function copyWatchCode() { navigator.clipboard.writeText(watchSessionCode).then(() => alert("📋 " + watchSessionCode)); }
+function copyWatchCode() { navigator.clipboard.writeText(watchSessionCode).then(() => showToast("Code " + watchSessionCode + " copie", "ok")); }
 
 /** Position reelle du player, quelle que soit l'API (callback ou promesse) */
 function _livePosition() {
