@@ -64,6 +64,12 @@ function openDevPanel() {
 }
 function grabCurrentTime() {
   if (!player || !currentVideo) return;
+  if (typeof betaOn === 'function' && betaOn('real-time-grab') && typeof player.getCurrentTime === 'function') {
+    player.getCurrentTime(t => {
+      document.getElementById("devTimeInput").value = formatSeconds(Math.floor(t || 0)) || "0:00";
+    });
+    return;
+  }
   const currentTime = getTimecodes()[currentVideo.id] || 0;
   document.getElementById("devTimeInput").value = formatSeconds(Math.floor(currentTime)) || "0:00";
 }

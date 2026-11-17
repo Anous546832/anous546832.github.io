@@ -158,9 +158,11 @@ function loadVideo(v, chapterIndex = 0) {
   const url = `https://cdn.embedly.com/widgets/media.html?src=https%3A%2F%2Fstreamable.com%2Fe%2F${v.id}&display_name=Streamable&url=${encodeURIComponent("https://streamable.com/"+v.id)}&key=96a16496e36611e091d14040d3dc5c07&type=text%2Fhtml&schema=streamable`;
   document.getElementById("videoArea").innerHTML = `<iframe id="main-player" src="${url}" allowfullscreen scrolling="no"></iframe>`;
   player = new playerjs.Player(document.getElementById("main-player"));
+  if (typeof betaVideoLoaded === 'function') betaVideoLoaded();
 
   player.on('ready', () => {
     player.setLoop(false); // doit être appelé après ready (API playerjs)
+    if (typeof betaPlayerReady === 'function') betaPlayerReady(player);
 
     const saved = getTimecodes()[v.id];   // toujours la valeur à jour (document de synchro)
     const targetTime = (chapterIndex > 0 && chapter.start > 0) ? chapter.start : (saved || 0);
